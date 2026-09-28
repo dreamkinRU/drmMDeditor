@@ -169,6 +169,36 @@ let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add
 const IC={clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',wifi:'<path d="M5 12.5a10 10 0 0 1 14 0M8 15.5a6 6 0 0 1 8 0"/><circle cx="12" cy="18.5" r="1.3"/>',bat:'<rect x="2" y="8" width="17" height="8" rx="2"/><path d="M22 11v2M6 11v2m3-2v2"/>',plug:'<path d="M9 2v6m6-6v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/>',bell:'<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 19a2 2 0 0 0 4 0"/>',scr:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/>',pop:'<rect x="4" y="8" width="16" height="8" rx="4"/>',bt:'<path d="m7 7 10 10-5 4V3l5 4L7 17"/>',pause:'<path d="M9 5v14M15 5v14"/>',vib:'<path d="M4 9v6m3-9v12m5-14v16m5-12v8m4-5v2"/>',app:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4m8-4v4"/>',if:'<path d="M4 5v6a3 3 0 0 0 3 3h4m7-9-4 4 4 4"/>',loop:'<path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',brk:'<path d="M4 17h6a3 3 0 0 0 3-3V9"/><path d="m10 13 3-4 3 4"/><path d="M16 17h4"/>',end:'<rect x="5" y="5" width="14" height="14" rx="3"/><path d="M9 12h6"/>',raw:'<path d="m8 9-4 3 4 3m8-6 4 3-4 3"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9l2.1 2.1m10 10 2.1 2.1M4.9 19.1l2.1-2.1m10-10 2.1-2.1"/>'};
 const ic=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[k]||IC.gear}</svg>`;
 // ===== Данные =====
+// Условие для If/ElseIf/Loop: тип, сравнение, значение (экспортируется в m_condition)
+const CTYPE=[[0,'Переменная'],[1,'Буфер обмена (содержит)'],[2,'Уровень заряда батареи'],[3,'Wi‑Fi подключён к сети'],[4,'Bluetooth включён'],[5,'Экран включён'],[6,'Громкость'],[7,'Число месяца'],[8,'День недели'],[9,'Время суток']];
+const CMP=[[0,'равно'],[1,'не равно'],[2,'больше'],[3,'меньше'],[4,'содержит'],[5,'не содержит']];
+const CDAYS=[[0,'понедельник'],[1,'вторник'],[2,'среда'],[3,'четверг'],[4,'пятница'],[5,'суббота'],[6,'воскресенье']];
+// Конструктор объекта ограничения MacroDroid по форме условия
+function condObj(c){switch(+c.ct){
+case 1:return{m_classType:'ClipboardConstraint',m_clipboardEquals:+c.op==0||+c.op==4,m_stringValue:c.v||'',m_not:+c.op==1||+c.op==5};
+case 2:return{m_classType:'BatteryLevelConstraint',m_greaterThan:+c.op==2,m_equals:+c.op==0,m_batteryLevel:+c.v||0};
+case 3:{const s=String(c.v||'').trim();return{m_classType:'WifiConstraint',m_connected:s?!isNaN(+s):true,...(s&&!isNaN(+s)?{}:(s?{m_SSID:s,m_SSIDList:[s]}:{}))}}
+case 4:return{m_classType:'BluetoothConstraint',m_on:+c.v?true:false};
+case 5:return{m_classType:'ScreenOnOffConstraint',m_screenOn:+c.v?true:false};
+case 6:return{m_classType:'VolumeConstraint',m_option:0,m_compareEqual:+c.op==0,m_greaterThan:+c.op==2,m_lessThan:+c.op==3,m_volumePercent:+c.v||0};
+case 7:return{m_classType:'DayOfMonthConstraint',m_day:+c.v||1};
+case 8:return{m_classType:'DayOfWeekConstraint',m_daysOfWeek:[0,0,0,0,0,0,0].map((_,i)=>i==+c.v)};
+case 9:{const[h,m]=String(c.v||'00:00').split(':');return{m_classType:'TimeOfDayConstraint',m_startHour:+h||0,m_startMinute:+m||0,m_endHour:+h||0,m_endMinute:+m||0}}
+default:return{m_classType:'MacroDroidVariableConstraint',m_variable:{m_name:c.name||'my_var',m_type:2},m_compareEqual:+c.op==0,m_stringValue:c.v||'',m_stringGreaterThan:+c.op==4,m_stringLessThan:+c.op==5,m_caseSensitive:false}}}
+// Разбор ограничения MacroDroid в форму условия (null = класс не распознан)
+function parseCond(o){if(!o||typeof o!=='object')return null;const c=o.m_classType,d={ct:0,name:'',op:0,v:''};
+if(c=='MacroDroidVariableConstraint'){d.name=o.m_variable?.m_name||'my_var';d.v=o.m_stringValue??o.m_intValue??'';d.op=o.m_compareEqual?0:(o.m_stringGreaterThan?4:o.m_stringLessThan?5:1);return d}
+if(c=='ClipboardConstraint'){d.v=o.m_stringValue||'';d.op=o.m_clipboardEquals?(String(d.v).match(/[a-zа-я]/i)?4:0):1;d.ct=1;return d}
+if(c=='BatteryLevelConstraint'){d.v=o.m_batteryLevel??20;d.op=o.m_greaterThan?2:0;d.ct=2;return d}
+if(c=='WifiConstraint'){d.v=o.m_SSID||(o.m_connected?'1':'0');d.ct=3;return d}
+if(c=='BluetoothConstraint'){d.v=o.m_on?1:0;d.ct=4;return d}
+if(c=='ScreenOnOffConstraint'){d.v=o.m_screenOn?1:0;d.ct=5;return d}
+if(c=='VolumeConstraint'&&o.m_option==0){d.v=o.m_volumePercent??50;d.op=o.m_compareEqual?0:o.m_greaterThan?2:3;d.ct=6;return d}
+if(c=='DayOfMonthConstraint'){d.v=o.m_day??1;d.ct=7;return d}
+if(c=='DayOfWeekConstraint'){const a=o.m_daysOfWeek||[];d.v=a.findIndex(Boolean);if(d.v<0)return null;d.ct=8;return d}
+if(c=='TimeOfDayConstraint'){d.v=pad(o.m_startHour??0)+':'+pad(o.m_startMinute??0);d.ct=9;return d}
+return null}
+const condSum=c=>{const op=lab(CMP,c.op);switch(+c.ct){case 1:return`буфер ${op} «${c.v||''}»`;case 2:return`заряд ${op} ${c.v}%`;case 3:return String(c.v||'')&&!isNaN(+c.v)?(+c.v?'Wi‑Fi подключён':'Wi‑Fi не подключён'):'Wi‑Fi к «'+c.v+'»';case 4:return+c.v?'Bluetooth включён':'Bluetooth выключен';case 5:return+c.v?'экран включён':'экран выключен';case 6:return`громкость ${op} ${c.v}%`;case 7:return'число месяца '+c.v;case 8:return'сегодня '+lab(CDAYS,c.v);case 9:return'время '+c.v;default:return`{v=${c.name||'my_var'}} ${op} «${c.v||''}»`}};
 const DAYS=[['all','каждый день'],['wd','по будням'],['we','по выходным']];
 const tDays=v=>v=='wd'?[1,1,1,1,1,0,0].map(Boolean):v=='we'?[0,0,0,0,0,1,1].map(Boolean):Array(7).fill(true);
 const cDays=v=>v=='wd'?[0,1,1,1,1,1,0].map(Boolean):v=='we'?[1,0,0,0,0,0,1].map(Boolean):Array(7).fill(true);
@@ -193,11 +223,11 @@ PauseAction:{k:'a',n:'Пауза',i:'pause',h:'Ждёт перед следую�
 VibrateAction:{k:'a',n:'Вибрация',i:'vib',h:'Вибрация с выбранным рисунком.',f:[['v','Рисунок','x',1,[[0,'щелчок'],[1,'короткая'],[2,'длинная'],[3,'частая']]]],s:p=>lab([[0,'щелчок'],[1,'короткая'],[2,'длинная'],[3,'частая']],p.v),o:p=>({m_vibratePattern:+p.v})},
 LaunchActivityAction:{k:'a',n:'Запуск приложения',i:'app',h:'Открывает приложение по имени пакета.',f:[['pk','Пакет приложения','s','com.android.chrome']],s:p=>p.pk,o:p=>({option:1,launchByPackageName:p.pk,m_packageToLaunch:p.pk,m_applicationName:p.pk})},
 SetBrightnessAction:{k:'a',n:'Яркость',i:'sun',h:'Задаёт яркость экрана.',f:[['b','Яркость, %','n',50]],s:p=>p.b+'%',o:p=>({setAutoBrightness:false,setBrightnessValue:true,m_brightnessPercent:+p.b,migrated:true})},
-IfConditionAction:{k:'f',n:'Если (If)',i:'if',h:'Ветка «если». Условие задают вложенные ограничения — привяжите их связью с Alt к этому блоку. Порядок выполнения задают связи (или позиция слева→направо).',f:[['or','Логика','x',0,[[0,'И (все условия)'],[1,'ИЛИ (любое)']]]],s:p=>+p.or?'если любое условие':'если все условия',o:p=>({m_isOrCondition:!!+p.or}),cl:true},
-ElseIfConditionAction:{k:'f',n:'Иначе если (ElseIf)',i:'if',h:'Дополнительная ветка внутри If…EndIf. Также использует связанные ограничения.',f:[['or','Логика','x',0,[[0,'И (все условия)'],[1,'ИЛИ (любое)']]]],s:p=>+p.or?'иначе если любое':'иначе если все',o:p=>({m_isOrCondition:!!+p.or}),cl:true},
+IfConditionAction:{k:'f',n:'Если (If)',i:'if',h:'Ветка «если». Условие(я) добавляются кнопкой «+ условие» в панели свойств блока. Порядок веток задают связи: следующий блок после If — тело ветки «тогда».',f:[['or','Логика условий','x',0,[[0,'И (все условия)'],[1,'ИЛИ (любое)']]],['conds','Условия','cond',null]],s:p=>{const c=p.conds||[];return c.length?(+p.or?'если любое: ':'если все: ')+c.map(condSum).join(' · '):'условие не задано'},o:p=>({m_isOrCondition:!!+p.or,m_constraintList:(p.conds||[]).map(c=>({...condObj(c),m_SIGUID:0}))}),condEdit:true},
+ElseIfConditionAction:{k:'f',n:'Иначе если (ElseIf)',i:'if',h:'Дополнительная ветка внутри If…EndIf. Также использует условия (кнопка «+ условие»).',f:[['or','Логика условий','x',0,[[0,'И (все условия)'],[1,'ИЛИ (любое)']]],['conds','Условия','cond',null]],s:p=>{const c=p.conds||[];return c.length?(+p.or?'иначе если любое: ':'иначе если все: ')+c.map(condSum).join(' · '):'условие не задано'},o:p=>({m_isOrCondition:!!+p.or,m_constraintList:(p.conds||[]).map(c=>({...condObj(c),m_SIGUID:0}))}),condEdit:true},
 ElseAction:{k:'f',n:'Иначе (Else)',i:'if',h:'Ветка «иначе» между If и EndIf.',f:[],s:()=>'иначе',o:()=>({})},
 EndIfAction:{k:'f',n:'Конец если (EndIf)',i:'end',h:'Закрывает блок If. Обязателен для каждой цепочки If/ElseIf/Else.',f:[],s:()=>'закрыть If',o:()=>({})},
-LoopAction:{k:'f',n:'Цикл (Loop)',i:'loop',h:'Повторяет действия до EndLoopAction. Для while/do-while привяжите ограничение-условие (Alt+связь вниз).',f:[['opt','Тип цикла','x',0,LOPT],['cnt','Повторов','n',5],['dur','Длительность','n',30],['u','Единица','x',0,UNIT]],s:p=>{const o=+p.opt;return o==0?p.cnt+' раз':o==4?p.dur+' '+lab(UNIT,p.u):o==3?'бесконечный':o==1?'while':'do-while'},o:p=>{const o={m_option:+p.opt};if(o.m_option==0)o.m_fixedOptionCount=+p.cnt;if(o.m_option==4){o.timedDurationValue=+p.dur;o.timedTimeUnit=+p.u}return o},cl:true},
+LoopAction:{k:'f',n:'Цикл (Loop)',i:'loop',h:'Повторяет действия до EndLoopAction. Для «пока верно»/«do-while» добавьте условие кнопкой «+ условие». Тело цикла — блоки, связанные после Loop.',f:[['opt','Тип цикла','x',0,LOPT],['cnt','Повторов','n',5],['dur','Длительность','n',30],['u','Единица','x',0,UNIT],['conds','Условия цикла','cond',null]],s:p=>{const o=+p.opt,c=(p.conds||[]).map(condSum).join(' · ');return (o==0?p.cnt+' раз':o==4?p.dur+' '+lab(UNIT,p.u):o==3?'бесконечный':o==1?(c?'пока '+c:'while'):(c?'do-while, пока '+c:'do-while'))},o:p=>{const o={m_option:+p.opt};if(o.m_option==0)o.m_fixedOptionCount=+p.cnt;if(o.m_option==4){o.timedDurationValue=+p.dur;o.timedTimeUnit=+p.u}if(o.m_option==1||o.m_option==2)o.m_condition=(p.conds||[]).map(condObj);return o},condEdit:true},
 BreakFromLoopAction:{k:'f',n:'Прервать цикл',i:'brk',h:'Выход из текущего цикла (Break).',f:[],s:()=>'break',o:()=>({})},
 ContinueLoopAction:{k:'f',n:'Следующая итерация',i:'brk',h:'Пропустить остаток тела цикла (Continue).',f:[],s:()=>'continue',o:()=>({})},
 EndLoopAction:{k:'f',n:'Конец цикла (EndLoop)',i:'end',h:'Закрывает Loop. Обязателен для каждого LoopAction.',f:[],s:()=>'закрыть цикл',o:()=>({})},
@@ -228,22 +258,19 @@ function add(t,x,y,p,cls){const n={id:nid++,t,x,y,p:{},raw:null};const d=D[t];if
 const KN=t=>D[t]&&!D[t].raw;
 function rn(){wd.innerHTML='';nodes.forEach(n=>{const d=D[n.t]||D.UnknownBlock;const e=document.createElement('div');e.className='nd '+d.k+(sel==n.id?' sel':'');e.style.left=n.x+'px';e.style.top=n.y+'px';e.dataset.id=n.id;
 const sub=d.raw&&n.raw?shortRaw(n.raw):(d.s?d.s(n.p):'');
-e.innerHTML=(d.k=='a'||d.k=='f'?`<i class="pt in" data-in="${n.id}"></i>`:'')+(d.k!='c'?`<i class="pt out" data-out="${n.id}"></i>`:'')+`<b>${ic(d.i)}${esc(d.n)}</b><span class="sub">${esc(sub)}</span>`+(d.cl&&!isLinkedC(n)?'<span class="badge">нужны условия</span>':'')+(!KN(n.t)&&n.raw?`<span class="badge">${esc(n.raw.m_classType||'?')}</span>`:'');wd.appendChild(e)});
+e.innerHTML=(d.k=='a'||d.k=='f'?`<i class="pt in" data-in="${n.id}"></i>`:'')+(d.k!='c'?`<i class="pt out" data-out="${n.id}"></i>`:'')+`<b>${ic(d.i)}${esc(d.n)}</b><span class="sub">${esc(sub)}</span>`+(d.condEdit&&!(n.p.conds||[]).length?'<span class="badge">+ условие в панели справа</span>':'')+(!KN(n.t)&&n.raw?`<span class="badge">${esc(n.raw.m_classType||'?')}</span>`:'');wd.appendChild(e)});
 $('#hint').hidden=nodes.length>0;dl()}
 function shortRaw(r){try{const s=JSON.stringify(r);return s.length>60?s.slice(0,57)+'…':s}catch(_){return ''}}
 const isLinkedC=f=>links.some(l=>l.c!=null&&l.c==f.id);
 const pos=(id,o)=>{const n=nodes.find(x=>x.id==id);return[n.x+(o?W:0),n.y+24]};
 const cur=(a,b)=>{const dx=Math.max(50,Math.abs(b[0]-a[0])/2);return`M${a} C${a[0]+dx},${a[1]} ${b[0]-dx},${b[1]} ${b}`};
-const curDown=(a,b)=>`M${a[0]},${a[1]} C${a[0]-40},${a[1]+50} ${b[0]-40},${b[1]+50} ${b[0]},${b[1]}`;
 function dl(){svg.innerHTML=links.map((l,i)=>{
-if(l.c!=null){const f=nodes.find(n=>n.id==l.a),c=nodes.find(n=>n.id==l.c);if(!f||!c)return'';return`<path class="lk br" data-i="${i}" d="${curDown([f.x+W/2,f.y+52],[c.x,c.y+24])}"><title>Условие блока — нажмите, чтобы удалить связь</title></path>`}
-return`<path class="lk" data-i="${i}" d="${cur(pos(l.a,1),pos(l.b,0))}"><title>Нажмите, чтобы удалить связь</title></path>`}).join('')+(drag&&drag.m=='l'?`<path class="tmp" d="${cur(pos(drag.from,1),[drag.x,drag.y])}"/>`:'')+(drag&&drag.m=='lc'?`<path class="tmp" d="${cur([drag.fx,drag.fy],[drag.x,drag.y])}"/>`:'')}
+return`<path class="lk" data-i="${i}" d="${cur(pos(l.a,1),pos(l.b,0))}"><title>Нажмите, чтобы удалить связь</title></path>`}).join('')+(drag&&drag.m=='l'?`<path class="tmp" d="${cur(pos(drag.from,1),[drag.x,drag.y])}"/>`:'')}
 svg.addEventListener('click',e=>{const p=e.target.closest('.lk');if(p){links.splice(+p.dataset.i,1);dl();rj();save()}});
 function pick(id){sel=id;document.querySelectorAll('.nd').forEach(e=>e.classList.toggle('sel',e.dataset.id==id));rp()}
 wd.addEventListener('pointerdown',e=>{const o=e.target.closest('[data-out]');
 if(o){drag={m:'l',from:+o.dataset.out};const w=wp(e);drag.x=w.x;drag.y=w.y;e.preventDefault();return}
 const el=e.target.closest('.nd');if(!el)return;const n=nodes.find(x=>x.id==el.dataset.id);pick(n.id);ensureVisible(n.id);
-if(e.altKey&&(D[n.t]||{}).cl){drag={m:'lc',from:n.id,fx:n.x+W/2,fy:n.y+52};const w=wp(e);drag.x=w.x;drag.y=w.y;e.preventDefault();return}
 const w=wp(e);drag={m:'n',n,el,dx:w.x-n.x,dy:w.y-n.y}});
 cv.addEventListener('pointerdown',e=>{if(!e.target.closest('.nd,.lk'))pick(null)});
 document.addEventListener('pointermove',e=>{if(!drag)return;
@@ -254,8 +281,6 @@ else{drag.x=w.x;drag.y=w.y}dl()});
 document.addEventListener('pointerup',e=>{if(!drag)return;
 if(drag.m=='l'){const t=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-in]');
 if(t){const b=+t.dataset.in;if(b!=drag.from&&!links.some(l=>l.a==drag.from&&l.b==b)){links.push({a:drag.from,b});rj();save()}}}
-if(drag.m=='lc'){const t=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-id]');
-if(t){const c=+t.dataset.id,cd=D[nodes.find(n=>n.id==c)?.t];if(cd&&cd.k=='c'&&c!=drag.from&&!links.some(l=>l.a==drag.from&&l.c==c)){links.push({a:drag.from,c});rn();toast('Условие привязано к блоку');save()}}}
 drag=null;dl();rj()});
 document.addEventListener('keydown',e=>{
 if((e.key=='Delete'||e.key=='Backspace')&&sel&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))rm(sel);
@@ -264,10 +289,11 @@ if(e.key.toLowerCase()=='d'&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.te
 function rm(id){nodes=nodes.filter(n=>n.id!=id);links=links.filter(l=>l.a!=id&&l.b!=id&&l.c!=id);sel=null;rn();rp();save()}
 cv.addEventListener('dragover',e=>e.preventDefault());
 cv.addEventListener('drop',e=>{e.preventDefault();const t=e.dataTransfer.getData('t');if(!D[t])return;const w=wp(e);const n=add(t,Math.max(0,Math.round((w.x-W/2)/10)*10),Math.max(0,Math.round((w.y-20)/10)*10));rn();pick(n.id);save()});
-// зум колесом / панорамирование
-cv.addEventListener('wheel',e=>{e.preventDefault();
-if(e.ctrlKey||e.metaKey){const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,f=e.deltaY<0?1.12:1/1.12,nz=Math.min(2.5,Math.max(.25,view.z*f));view.x=mx-(mx-view.x)*nz/view.z;view.y=my-(my-view.y)*nz/view.z;view.z=nz}
-else{view.x-=e.deltaX;view.y-=e.deltaY}applyView()},{passive:false});
+// зум колесом / панорамирование: колесо = масштаб к курсору, Shift+колесо или тачпад = прокрутка
+cv.addEventListener('wheel',e=>{e.preventDefault();const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+if(e.shiftKey&&Math.abs(e.deltaX)<1){view.x-=e.deltaY;applyView();return}
+if(Math.abs(e.deltaX)>Math.abs(e.deltaY)){view.x-=e.deltaX;view.y-=e.deltaY;applyView();return}
+const f=e.deltaY<0?1.12:1/1.12,nz=Math.min(2.5,Math.max(.25,view.z*f));view.x=mx-(mx-view.x)*nz/view.z;view.y=my-(my-view.y)*nz/view.z;view.z=nz;applyView()},{passive:false});
 cv.addEventListener('pointerdown',e=>{if(e.button==1||(e.button==0&&e.shiftKey&&!e.target.closest('.nd,.lk,.zoombar,.hintcard'))){drag={m:'pan',sx:e.clientX,sy:e.clientY,vx:view.x,vy:view.y};e.preventDefault()}});
 function ensureVisible(id){const n=nodes.find(x=>x.id==id);if(!n)return;const r=cv.getBoundingClientRect();const sx=n.x*view.z+view.x,sy=n.y*view.z+view.y;if(sx<8||sy<8||sx+W*view.z>r.width-8||sy+70*view.z>r.height-8){view.x=Math.min(r.width-W*view.z-12,Math.max(12,r.width*0.35-n.x*view.z));view.y=Math.min(r.height-90,Math.max(12,r.height*0.4-n.y*view.z));applyView()}}
 $('#zin').onclick=()=>{view.z=Math.min(2.5,view.z*1.2);applyView()};
@@ -295,11 +321,36 @@ $('#rawApply').onclick=()=>{try{const o=JSON.parse($('#rawEd').value);if(typeof 
 $('#ukCls').oninput=e=>{if(n.raw){n.raw.m_classType=e.target.value;n.p.cls=e.target.value;const s=wd.querySelector(`[data-id="${n.id}"] .sub`);if(s)s.textContent=e.target.value}};
 $('#rawCp').onclick=()=>copyText(JSON.stringify(n.raw,null,2),'JSON блока скопирован');
 $('#rmB').onclick=()=>rm(n.id);return}
-P.innerHTML=`<h3 class="${d.k}">${ic(d.i)}${d.n}</h3><p class="mu">${d.h}</p>`+d.f.map(f=>`<label>${f[1]}`+(f[2]=='x'?`<select data-k="${f[0]}">${f[4].map(o=>`<option value="${o[0]}"${String(o[0])==String(n.p[f[0]])?' selected':''}>${o[1]}</option>`).join('')}</select>`:`<input data-k="${f[0]}" type="${f[2]=='n'?'number':'text'}" value="${esc(n.p[f[0]])}">`)+'</label>').join('')
-+(d.cl?`<h4 style="margin:16px 0 0;font-size:12px;color:var(--mu)">Условия этого блока (${linkedC(n).length})</h4>`+(linkedC(n).length?linkedC(n).map(c=>`<div class="pi c" style="cursor:default;margin-top:6px"><span class="ic">${ic((D[c.t]||{}).i||'gear')}</span><span class="tx"><b>${D[c.t]?D[c.t].n:'?'}</b><small>${esc(D[c.t]&&D[c.t].s?D[c.t].s(c.p):'')}</small></span><button class="b" data-uc="${c.id}" style="margin-left:auto;padding:3px 8px" title="Отвязать">×</button></div>`).join(''):'<p class="mu">Нет. Зажмите Alt и потяните от этого блока вниз к ограничению (жёлтому блоку).</p>'):'')+`<button class="b del" id="rmB">Удалить блок</button>`;
+P.innerHTML=`<h3 class="${d.k}">${ic(d.i)}${d.n}</h3><p class="mu">${d.h}</p>`+d.f.map(f=>f[2]=='cond'?'':`<label>${f[1]}`+(f[2]=='x'?`<select data-k="${f[0]}">${f[4].map(o=>`<option value="${o[0]}"${String(o[0])==String(n.p[f[0]])?' selected':''}>${o[1]}</option>`).join('')}</select>`:`<input data-k="${f[0]}" type="${f[2]=='n'?'number':'text'}" value="${esc(n.p[f[0]])}">`)+'</label>').join('')
++(d.condEdit?condEditorHTML(n,d):'')+`<button class="b del" id="rmB">Удалить блок</button>`;
 P.oninput=e=>{const k=e.target.dataset.k;if(!k)return;n.p[k]=e.target.value;const s=wd.querySelector(`[data-id="${n.id}"] .sub`);if(s&&d.s)s.textContent=d.s(n.p);save()};
-P.querySelectorAll('[data-uc]').forEach(b=>b.onclick=()=>{links=links.filter(l=>!(l.a==n.id&&l.c==+b.dataset.uc));rn();rp();save()});
+bindCondEditor(n,d);
 $('#rmB').onclick=()=>rm(n.id)}
+// ===== Редактор условий If/ElseIf/Loop в панели свойств =====
+function condField(c,i){const show=(f)=>(+c.ct==0||+c.ct==1)&&f=='s'||+c.ct==6&&f=='n'||+c.ct==2&&f=='n';let inp='';
+if(+c.ct==0)inp=`<input data-ci="${i}" data-cf="name" value="${esc(c.name||'my_var')}" placeholder="имя переменной" title="Имя переменной MacroDroid (без фигурных скобок)"> <input data-ci="${i}" data-cf="v" value="${esc(c.v)}" placeholder="значение">`;
+else if(+c.ct==1)inp=`<input data-ci="${i}" data-cf="v" value="${esc(c.v)}" placeholder="текст в буфере">`;
+else if(+c.ct==2||+c.ct==6)inp=`<input data-ci="${i}" data-cf="v" type="number" value="${esc(c.v)}" min="0" max="100"> <span class="mu" style="font-size:11px">%</span>`;
+else if(+c.ct==3)inp=`<input data-ci="${i}" data-cf="v" value="${esc(c.v)}" placeholder="SSID сети или 1/0">`;
+else if(+c.ct==4||+c.ct==5)inp=`<select data-ci="${i}" data-cf="v"><option value="1"${+c.v?' selected':''}>да</option><option value="0"${+c.v?'':' selected'}>нет</option></select>`;
+else if(+c.ct==7)inp=`<input data-ci="${i}" data-cf="v" type="number" value="${esc(c.v)}" min="1" max="31"> <span class="mu" style="font-size:11px">число месяца</span>`;
+else if(+c.ct==8)inp=`<select data-ci="${i}" data-cf="v">${CDAYS.map(o=>`<option value="${o[0]}"${o[0]==+c.v?' selected':''}>${o[1]}</option>`).join('')}</select>`;
+else inp=`<input data-ci="${i}" data-cf="v" type="time" value="${esc(c.v||'09:00')}">`;
+const needOp=[0,1,2,6].includes(+c.ct);
+return `<div class="crow"><select data-ci="${i}" data-cf="ct" title="Что проверять">${CTYPE.map(o=>`<option value="${o[0]}"${o[0]==+c.ct?' selected':''}>${o[1]}</option>`).join('')}</select>`
++(needOp?`<select data-ci="${i}" data-cf="op" title="Как сравнивать">${CMP.map(o=>`<option value="${o[0]}"${o[0]==+c.op?' selected':''}>${o[1]}</option>`).join('')}</select>`:'')+inp+`<button class="b" data-cdel="${i}" title="Удалить условие">×</button></div>`}
+function condEditorHTML(n,d){const cs=n.p.conds||(n.p.conds=[]);
+return `<h4 style="margin:16px 0 4px;font-size:12px;color:var(--mu)">Условия (${cs.length})</h4>`
++(cs.length?cs.map((c,i)=>condField(c,i)).join(''):'<p class="mu">Условий нет — ветка выполнится всегда. Нажмите «+ Условие».</p>')
++`<button class="b" id="addCond" style="margin-top:6px">+ Условие</button>`
++(cs.length?`<button class="b" id="rawCond" style="margin-top:6px;margin-left:6px">Сырой JSON</button>`:'')}
+function bindCondEditor(n,d){const cs=n.p.conds||(n.p.conds=[]);const upd=()=>{const s=wd.querySelector(`[data-id="${n.id}"] .sub`);if(s&&d.s)s.textContent=d.s(n.p);const b=wd.querySelector(`[data-id="${n.id}"] .badge`);if(b)b.remove();save()};
+P.querySelectorAll('[data-ci]').forEach(el=>{el.onchange=()=>{const c=cs[+el.dataset.ci];if(!c)return;c[el.dataset.cf]=el.value;upd();rp();P.querySelectorAll('[data-ci]').forEach(e2=>e2.onchange=el.onchange)}});
+const ac=$('#addCond');if(ac)ac.onclick=()=>{cs.push({ct:0,name:'my_var',op:0,v:''});upd();rp()};
+const rc=$('#rawCond');if(rc)rc.onclick=()=>openModal('Условия блока · сырой JSON',
+`<p class="mu">Массив m_constraintList блока, как он попадёт в экспорт. Можно править вручную — при корректном JSON поддерживаемые классы условий вернутся в форму.</p><textarea id="condRaw" spellcheck="false" style="min-height:220px;font:12px 'JetBrains Mono',monospace">${esc(JSON.stringify(cs.map(c=>({...condObj(c),m_SIGUID:0})),null,2))}</textarea>`,
+()=>{try{const arr=JSON.parse($('#condRaw').value);if(!Array.isArray(arr))throw new Error('нужен массив []');const parsed=arr.map(parseCond);if(parsed.some(x=>!x)){n.raw={...n.raw,m_constraintList:arr};toast('Часть условий не распознаётся — блок сохранён как «Прочее» с исходным JSON');rn();rp()}else{n.p.conds=parsed;upd();rp();toast('Условия обновлены')}}catch(e){toast('Некорректный JSON: '+(e.message||''))}return false}});
+P.querySelectorAll('[data-cdel]').forEach(b=>b.onclick=()=>{cs.splice(+b.dataset.cdel,1);upd();rp()})}
 function linkedC(n){return links.filter(l=>l.c!=null&&l.a==n.id).map(l=>nodes.find(x=>x.id==l.c)).filter(Boolean)}
 const rj=()=>{if(tab=='j'||tab=='v'||tab=='d')rp()};
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',x==b));rp()});
@@ -312,7 +363,7 @@ const seen=new Set(),walk=id=>links.filter(l=>l.a==id&&l.c==null).forEach(l=>{if
 trs.forEach(n=>walk(n.id));
 const rest=nodes.filter(n=>['a','f'].includes(catOf(n))&&!seen.has(n.id)).sort((a,b)=>a.x-b.x||a.y-b.y);
 const flow=[...trs.flatMap(n=>chain(n.id)),...rest];
-const item=n=>{const d=D[n.t]||D.UnknownBlock;const cs=linkedC(n).map(c=>{const cd=D[c.t]||D.UnknownBlock;return cd.n+': '+cd.s(c.p)});
+const item=n=>{const d=D[n.t]||D.UnknownBlock;const cs=(n.p.conds||[]).map(condSum);
 return it(d.k,d.n,esc(d.raw?(n.raw?.m_classType||''):d.s(n.p))+(cs.length?`<small>Условия блока: ${esc(cs.join(' · '))}</small>`:''))};
 function chain(id,out){out=out||new Set();if(out.has(id))return[];out.add(id);const n=nodes.find(x=>x.id==id);return(n?[n]:[]).concat(...links.filter(l=>l.a==id&&l.c==null).map(l=>chain(l.b,out)))}
 const body=(trs.length?'<div class="vsec">Запуск</div>'+trs.map(item).join(''):'')+
@@ -370,7 +421,7 @@ const order=[],seen=new Set(),walk=id=>links.filter(l=>l.a==id&&l.c==null).forEa
 tr.forEach(n=>walk(n.id));
 const rest=nodes.filter(n=>(cat(n)=='a'||cat(n)=='f')&&!seen.has(n.id)).sort((a,b)=>a.x-b.x||a.y-b.y);rest.forEach(n=>order.push(n.id));
 const sg=new Map();tr.forEach((n,i)=>sg.set(n.id,112233445566771+i));
-const mk=(n,g)=>{const d=D[n.t]||D.UnknownBlock;if(d.raw)return{...n.raw};const o={m_classType:n.t,m_SIGUID:g||0,...d.o(n.p)};if(d.cl){const cs=linkedC(n).map(c=>{const cd=D[c.t];return cd&&cd.raw?{...c.raw}:{m_classType:c.t,m_SIGUID:0,...(cd?cd.o(c.p):{})}});if(cs.length)o.m_constraintList=cs}return o};
+const mk=(n,g)=>{const d=D[n.t]||D.UnknownBlock;if(d.raw)return{...n.raw};const o={m_classType:n.t,m_SIGUID:g||0,...d.o(n.p)};return o};
 const acts=order.map(id=>nodes.find(n=>n.id==id)).filter(n=>{const d=D[n.t]||D.UnknownBlock;return ['a','f'].includes(d.k)&&!(d.raw&&isLinkedC(n))}).map(n=>{if(!KN(n.t)&&n.raw){const o={...n.raw};if(Array.isArray(o.m_constraintList)){o.m_constraintList=linkedC(n).map(c=>c.raw?{...c.raw}:{m_classType:c.t,m_SIGUID:0,...(D[c.t]?D[c.t].o(c.p):{})})}return o}return mk(n,0)});
 return{macroExportVersion:1,macro:{m_name:meta.name||'Без названия',m_description:meta.desc||meta.name,m_enabled:true,m_completed:true,m_GUID:0,aiGenerated:1,
 m_triggerList:tr.length?tr.map(n=>mk(n,sg.get(n.id))):[{m_classType:'EmptyTrigger',m_SIGUID:0}],
@@ -388,7 +439,10 @@ const CON={'BatteryLevelConstraint':p=>({g:p.m_greaterThan?1:0,lv:p.m_batteryLev
 function importMD(o,warn){
 const m=o.macro||o;if(!m||typeof m!=='object'||!m.m_actionList&&!m.m_triggerList)throw new Error('в файле не найден макрос (m_actionList / m_triggerList)');
 const g=(obj,map)=>{const cn=obj.m_classType;if(map[cn]){if(obj.m_constraintList&&!Array.isArray(obj.m_constraintList)){warn.push(`Блок «${cn}» — нестандартное поле m_constraintList, блок импортирован как «Прочее»`);const u=add('UnknownBlock',0,0,{},cn);u.raw={...obj};return u}
-const n=add(cn,0,0,map[cn](obj));if(Array.isArray(obj.m_constraintList)&&obj.m_constraintList.length){if((D[cn]||{}).cl){obj.m_constraintList.forEach(c=>{const cn2=c.m_classType;if(CON[cn2]){const u=add(cn2,0,0,CON[cn2](c));links.push({a:n.id,c:u.id})}else{warn.push(`Условие «${cn2}» внутри блока — импортировано как «Прочее» (сырой JSON)`);const u=add('UnknownBlock',0,0,{},cn2);u.raw={...c};links.push({a:n.id,c:u.id})}})}else{n.raw={...obj};warn.push(`Вложенные условия блока «${cn}» не поддерживаются редактором — блок импортирован как «Прочее» с полным сохранением JSON`)}}
+const isFlowCond=(D[cn]||{}).condEdit&&(cn=='IfConditionAction'||cn=='ElseIfConditionAction'||cn=='LoopAction');
+const n=add(cn,0,0,map[cn](obj));
+if(isFlowCond){n.p.conds=[];if(Array.isArray(obj.m_constraintList)&&obj.m_constraintList.length){let bad=false;obj.m_constraintList.forEach(c=>{const p=parseCond(c);if(p)n.p.conds.push(p);else bad=true});if(bad){n.raw={...obj};warn.push(`Условия блока «${cn}» частично не распознаются редактором — блок импортирован как «Прочее» с полным сохранением JSON`)}}}
+else if(Array.isArray(obj.m_constraintList)&&obj.m_constraintList.length){n.raw={...obj};warn.push(`Вложенные условия блока «${cn}» не поддерживаются редактором — блок импортирован как «Прочее» с полным сохранением JSON`)}
 return n}
 warn.push(`Класс «${cn}» не поддерживается редактором — импортирован как «Прочее» (сырой JSON сохранён, экспорт без изменений)`);const u=add('UnknownBlock',0,0,{},cn);u.raw={...obj};return u};
 nodes=[];links=[];nid=1;sel=null;
