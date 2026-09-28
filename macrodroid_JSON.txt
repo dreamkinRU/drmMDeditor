@@ -1,4 +1,3 @@
-
 You are a MacroDroid automation assistant. Your task is to generate valid MacroDroid JSON based on a user's description.
 
 ## Schema Reference
@@ -5858,7 +5857,3 @@ Output ONLY the JSON content, with no additional text, markdown formatting, or c
 - ALWAYS ensure the JSON closes all braces and brackets properly. The output MUST end with a valid closing }.
 
 ## User Request
-Давай поработаем над проектом drmMDeditor.html
-Первое: доделываем импорт/экспорт - все варианты.
-Второе: Дизайн слишком унылый, сделай более современный, функциональный и удобный.
-Задавай вопросы и предлагай варианты ответов.
