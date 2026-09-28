@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Редактор макросов</title>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF1F5;--pn:#fff;--ink:#16202E;--mu:#5B6878;--ln:#D5DBE4;--t:#0E8A7D;--a:#4B5BD8;--c:#B7791F;--dot:#C9D1DC;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151C;--pn:#171E27;--ink:#E6EBF2;--mu:#93A0B2;--ln:#2A3441;--t:#3CC4B4;--a:#8A97F5;--c:#E0A83C;--dot:#263140}}
+:root[data-theme="dark"]{--bg:#10151C;--pn:#171E27;--ink:#E6EBF2;--mu:#93A0B2;--ln:#2A3441;--t:#3CC4B4;--a:#8A97F5;--c:#E0A83C;--dot:#263140}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font:14px/1.4 Onest,system-ui,sans-serif}
+header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--pn);border-bottom:1px solid var(--ln)}
+header input{font-weight:600;font-size:15px;width:230px;max-width:100%}
+input,select,textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:7px 8px;border:1px solid var(--ln);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+header input,header select{margin:0;width:auto}
+textarea{min-height:70px;resize:vertical}
+:focus-visible{outline:2px solid var(--a);outline-offset:1px}
+.b{padding:7px 12px;border:1px solid var(--ln);border-radius:6px;background:var(--pn);color:var(--ink);font:inherit;cursor:pointer}
+.b:hover{border-color:var(--a)}
+.del{margin-top:16px;color:#C2410C}
+main{flex:1;min-height:0;display:grid;grid-template-columns:220px 1fr 310px}
+aside{background:var(--pn);overflow:auto;padding:12px}
+#pal{border-right:1px solid var(--ln)}#pn{border-left:1px solid var(--ln)}
+aside h4{margin:14px 0 2px;font-size:13px}aside h4:first-child{margin-top:0}
+.mu{color:var(--mu);font-size:12px;margin:2px 0 8px}
+.pi{padding:7px 10px;margin:5px 0;border:1px solid var(--ln);border-left:4px solid var(--kc);border-radius:6px;cursor:grab;background:var(--bg)}
+.pi:hover{border-color:var(--kc)}
+.t{--kc:var(--t)}.a{--kc:var(--a)}.c{--kc:var(--c)}
+h3.t,h3.a,h3.c{margin:0 0 2px;font-size:16px;color:var(--kc)}
+#cv{overflow:auto;position:relative;background:radial-gradient(var(--dot) 1px,transparent 1px) 0 0/20px 20px}
+#world{position:relative;width:2200px;height:1400px}
+#wd,#lk{position:absolute;inset:0}
+#wd{pointer-events:none}#lk{pointer-events:none;width:2200px;height:1400px}
+.lk{fill:none;stroke:var(--mu);stroke-width:2.5;pointer-events:stroke;cursor:pointer}.lk:hover{stroke:var(--a);stroke-width:4}
+.tmp{fill:none;stroke:var(--a);stroke-width:2;stroke-dasharray:5 4}
+.nd{position:absolute;width:200px;box-sizing:border-box;padding:8px 12px 9px 14px;background:var(--pn);border:1px solid var(--ln);border-left:4px solid var(--kc);border-radius:8px;cursor:grab;user-select:none;touch-action:none;pointer-events:auto}
+.nd.c{border-style:dashed;border-left-style:solid}
+.nd b{display:block;font-weight:600}.nd span{display:block;color:var(--mu);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nd.sel{box-shadow:0 0 0 2px var(--kc)}
+.pt{position:absolute;top:16px;width:12px;height:12px;border-radius:50%;background:var(--pn);border:2px solid var(--kc);cursor:crosshair}
+.pt:hover{background:var(--kc)}.pt.in{left:-9px}.pt.out{right:-9px}
+label{display:block;margin-top:10px;color:var(--mu);font-size:12px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs .b[aria-pressed=true]{background:var(--a);color:#fff;border-color:var(--a)}
+pre{margin:10px 0 0;font:11px/1.45 "JetBrains Mono",ui-monospace,monospace;white-space:pre-wrap;word-break:break-all}
+#hint{position:absolute;left:40px;top:40px;color:var(--mu);max-width:340px}
+@media (max-width:860px){main{grid-template-columns:1fr;grid-template-rows:auto minmax(300px,1fr) 260px}#pal{border-right:0;border-bottom:1px solid var(--ln);max-height:150px}#pn{border-left:0;border-top:1px solid var(--ln)}}
+</style></head><body>
+<header>
+<input id="nm" aria-label="Название макроса">
+<select id="tp" aria-label="Шаблоны"><option value="">Шаблоны макросов…</option></select>
+<button class="b" id="clr">Очистить холст</button>
+</header>
+<main>
+<aside id="pal"></aside>
+<div id="cv"><div id="world"><svg id="lk"></svg><div id="wd"></div><div id="hint">Перетащите блок из палитры на холст. Чтобы связать действия, потяните от кружка справа к кружку слева.</div></div></div>
+<aside><div class="tabs"><button class="b" data-tab="p" aria-pressed="true">Настройки</button><button class="b" data-tab="j" aria-pressed="false">JSON</button></div><div id="pn" style="border:0;padding:0"></div></aside>
+</main>
+<script>
+const $=s=>document.querySelector(s),pad=n=>String(n).padStart(2,'0'),W=200;
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const lab=(a,v)=>(a.find(o=>o[0]==v)||[])[1]??v;
+const DAYS=[['all','каждый день'],['wd','по будням'],['we','по выходным']];
+const tDays=v=>v=='wd'?[1,1,1,1,1,0,0].map(Boolean):v=='we'?[0,0,0,0,0,1,1].map(Boolean):Array(7).fill(true);
+const cDays=v=>v=='wd'?[0,1,1,1,1,1,0].map(Boolean):v=='we'?[1,0,0,0,0,0,1].map(Boolean):Array(7).fill(true);
+const ON=[[0,'включить'],[1,'выключить'],[2,'переключить']];
+const WS=[[2,'подключился к сети'],[3,'отключился от сети'],[0,'Wi‑Fi включён'],[1,'Wi‑Fi выключен']];
+const GT=[[1,'больше'],[0,'меньше']];
+// Определения блоков: k=вид (t/a/c), f=поля [ключ, подпись, тип(n/s/x), значение, варианты], s=краткое описание, o=свойства для JSON
+const D={
+TimerTrigger:{k:'t',n:'Таймер',h:'Срабатывает в заданное время.',f:[['h','Час (0–23)','n',7],['m','Минута','n',0],['d','Дни','x','all',DAYS]],s:p=>`${pad(p.h)}:${pad(p.m)}, ${lab(DAYS,p.d)}`,o:p=>({m_hour:+p.h,m_minute:+p.m,m_daysOfWeek:tDays(p.d),m_useAlarm:true})},
+WifiConnectionTrigger:{k:'t',n:'Wi‑Fi',h:'Изменилось состояние Wi‑Fi.',f:[['w','Событие','x',2,WS],['ssid','Сеть (SSID)','s','Home']],s:p=>lab(WS,p.w)+(+p.w>1?': '+p.ssid:''),o:p=>{const o={m_wifiState:+p.w};if(+p.w>1){o.m_SSID=p.ssid;o.m_SSIDList=[p.ssid]}return o}},
+BatteryLevelTrigger:{k:'t',n:'Уровень заряда',h:'Заряд достиг порога.',f:[['dn','Заряд','x',1,[[1,'снижается до'],[0,'растёт до']]],['lv','Уровень, %','n',20]],s:p=>`${+p.dn?'падает до':'растёт до'} ${p.lv}%`,o:p=>({m_decreasesTo:!!+p.dn,m_batteryLevel:+p.lv})},
+ExternalPowerTrigger:{k:'t',n:'Зарядка',h:'Подключили или отключили питание.',f:[['c','Питание','x',1,[[1,'подключено'],[0,'отключено']]]],s:p=>+p.c?'питание подключено':'питание отключено',o:p=>({m_powerConnected:!!+p.c,m_powerConnectedOptions:[true,true,true],m_hasSetNewPowerConnectedOptions:true,m_hasSetUSBOption:true})},
+NotificationTrigger:{k:'t',n:'Уведомление',h:'Пришло уведомление от приложения.',f:[['pk','Пакет приложения','s','com.whatsapp'],['tx','Текст содержит','s','']],s:p=>p.pk+(p.tx?' · «'+p.tx+'»':''),o:p=>({m_option:0,m_packageNameList:[p.pk],m_applicationNameList:[p.pk],...(p.tx?{separateTitleAndMessage:true,matchOptionTitle:0,matchOptionMessage:2,messageContent:p.tx}:{})})},
+ScreenOnOffTrigger:{k:'t',n:'Экран',h:'Экран включился или выключился.',f:[['on','Экран','x',1,[[1,'включился'],[0,'выключился']]]],s:p=>+p.on?'включился':'выключился',o:p=>({m_screenOn:!!+p.on})},
+NotificationAction:{k:'a',n:'Уведомление',h:'Показывает системное уведомление.',f:[['sj','Заголовок','s','Готово'],['tx','Текст','s','Макрос выполнен']],s:p=>p.sj,o:p=>({m_notificationSubject:p.sj,m_notificationText:p.tx,m_overwriteExisting:true})},
+ToastAction:{k:'a',n:'Всплывающее сообщение',h:'Короткая подсказка на экране.',f:[['tx','Сообщение','s','Привет!'],['du','Длительность','x',2,[[2,'короткая'],[0,'длинная']]]],s:p=>p.tx,o:p=>({m_messageText:p.tx,m_duration:+p.du})},
+SetWifiAction:{k:'a',n:'Wi‑Fi',h:'Включает или выключает Wi‑Fi.',f:[['st','Действие','x',0,ON]],s:p=>lab(ON,p.st),o:p=>({m_state:+p.st})},
+SetBluetoothAction:{k:'a',n:'Bluetooth',h:'Включает или выключает Bluetooth.',f:[['st','Действие','x',0,ON]],s:p=>lab(ON,p.st),o:p=>({m_state:+p.st})},
+PauseAction:{k:'a',n:'Пауза',h:'Ждёт перед следующим действием.',f:[['sec','Секунд','n',2]],s:p=>p.sec+' с',o:p=>({m_delayInSeconds:+p.sec,m_useAlarm:true})},
+VibrateAction:{k:'a',n:'Вибрация',h:'Вибрация с выбранным рисунком.',f:[['v','Рисунок','x',1,[[0,'щелчок'],[1,'короткая'],[2,'длинная'],[3,'частая']]]],s:p=>lab([[0,'щелчок'],[1,'короткая'],[2,'длинная'],[3,'частая']],p.v),o:p=>({m_vibratePattern:+p.v})},
+LaunchActivityAction:{k:'a',n:'Запуск приложения',h:'Открывает приложение по имени пакета.',f:[['pk','Пакет приложения','s','com.android.chrome']],s:p=>p.pk,o:p=>({option:1,launchByPackageName:p.pk,m_packageToLaunch:p.pk,m_applicationName:p.pk})},
+SetBrightnessAction:{k:'a',n:'Яркость',h:'Задаёт яркость экрана.',f:[['b','Яркость, %','n',50]],s:p=>p.b+'%',o:p=>({setAutoBrightness:false,setBrightnessValue:true,m_brightnessPercent:+p.b,migrated:true})},
+BatteryLevelConstraint:{k:'c',n:'Уровень заряда',h:'Макрос выполняется, только если заряд подходит.',f:[['g','Заряд','x',1,GT],['lv','Уровень, %','n',20]],s:p=>`${lab(GT,p.g)} ${p.lv}%`,o:p=>({m_greaterThan:!!+p.g,m_equals:false,m_batteryLevel:+p.lv})},
+TimeOfDayConstraint:{k:'c',n:'Время суток',h:'Макрос выполняется только в этом окне.',f:[['a','С, час','n',22],['am','Минуты','n',0],['b','До, час','n',7],['bm','Минуты','n',0]],s:p=>`${pad(p.a)}:${pad(p.am)}–${pad(p.b)}:${pad(p.bm)}`,o:p=>({m_startHour:+p.a,m_startMinute:+p.am,m_endHour:+p.b,m_endMinute:+p.bm})},
+DayOfWeekConstraint:{k:'c',n:'День недели',h:'Макрос выполняется только в эти дни.',f:[['d','Дни','x','wd',DAYS]],s:p=>lab(DAYS,p.d),o:p=>({m_daysOfWeek:cDays(p.d)})}
+};
+const T={
+'Wi‑Fi по расписанию':{n:[['TimerTrigger',40,80,{}],['SetWifiAction',300,80,{}],['NotificationAction',560,80,{sj:'Wi‑Fi',tx:'Wi‑Fi включён'}]],l:[[0,1],[1,2]]},
+'Низкий заряд':{n:[['BatteryLevelTrigger',40,80,{}],['NotificationAction',300,60,{sj:'Низкий заряд',tx:'Подключите зарядку'}],['VibrateAction',560,60,{}],['TimeOfDayConstraint',40,240,{a:8,b:22}]],l:[[0,1],[1,2]]},
+'Пришёл домой':{n:[['WifiConnectionTrigger',40,80,{}],['ToastAction',300,80,{tx:'С возвращением!'}],['PauseAction',560,80,{sec:1}],['LaunchActivityAction',300,220,{pk:'com.spotify.music'}]],l:[[0,1],[1,2],[2,3]]}
+};
+let nodes=[],links=[],sel=null,nid=1,tab='p',drag=null,meta={name:'Новый макрос',desc:''};
+const cv=$('#cv'),svg=$('#lk'),wd=$('#wd'),P=$('#pn');
+function add(t,x,y,p){const n={id:nid++,t,x,y,p:{}};D[t].f.forEach(f=>n.p[f[0]]=f[3]);Object.assign(n.p,p||{});nodes.push(n);return n}
+function wp(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left+cv.scrollLeft,y:e.clientY-r.top+cv.scrollTop}}
+function rn(){wd.innerHTML='';nodes.forEach(n=>{const d=D[n.t],e=document.createElement('div');e.className='nd '+d.k+(sel==n.id?' sel':'');e.style.left=n.x+'px';e.style.top=n.y+'px';e.dataset.id=n.id;
+e.innerHTML=(d.k=='a'?`<i class="pt in" data-in="${n.id}"></i>`:'')+(d.k!='c'?`<i class="pt out" data-out="${n.id}"></i>`:'')+`<b>${d.n}</b><span>${esc(d.s(n.p))}</span>`;wd.appendChild(e)});
+$('#hint').hidden=nodes.length>0;dl()}
+const pos=(id,o)=>{const n=nodes.find(x=>x.id==id);return[n.x+(o?W:0),n.y+22]};
+const cur=(a,b)=>{const dx=Math.max(50,Math.abs(b[0]-a[0])/2);return`M${a} C${a[0]+dx},${a[1]} ${b[0]-dx},${b[1]} ${b}`};
+function dl(){svg.innerHTML=links.map((l,i)=>`<path class="lk" data-i="${i}" d="${cur(pos(l.a,1),pos(l.b,0))}"><title>Нажмите, чтобы удалить связь</title></path>`).join('')+(drag&&drag.m=='l'?`<path class="tmp" d="${cur(pos(drag.from,1),[drag.x,drag.y])}"/>`:'')}
+svg.addEventListener('click',e=>{const p=e.target.closest('.lk');if(p){links.splice(+p.dataset.i,1);dl();rj()}});
+function pick(id){sel=id;document.querySelectorAll('.nd').forEach(e=>e.classList.toggle('sel',e.dataset.id==id));rp()}
+wd.addEventListener('pointerdown',e=>{const o=e.target.closest('[data-out]');
+if(o){drag={m:'l',from:+o.dataset.out,x:0,y:0};const w=wp(e);drag.x=w.x;drag.y=w.y;e.preventDefault();return}
+const el=e.target.closest('.nd');if(!el)return;const n=nodes.find(x=>x.id==el.dataset.id);pick(n.id);const w=wp(e);drag={m:'n',n,el,dx:w.x-n.x,dy:w.y-n.y}});
+cv.addEventListener('pointerdown',e=>{if(!e.target.closest('.nd,.lk'))pick(null)});
+document.addEventListener('pointermove',e=>{if(!drag)return;const w=wp(e);
+if(drag.m=='n'){drag.n.x=Math.max(0,Math.round((w.x-drag.dx)/10)*10);drag.n.y=Math.max(0,Math.round((w.y-drag.dy)/10)*10);drag.el.style.left=drag.n.x+'px';drag.el.style.top=drag.n.y+'px'}
+else{drag.x=w.x;drag.y=w.y}dl()});
+document.addEventListener('pointerup',e=>{if(!drag)return;
+if(drag.m=='l'){const t=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-in]');
+if(t){const b=+t.dataset.in;if(b!=drag.from&&!links.some(l=>l.a==drag.from&&l.b==b))links.push({a:drag.from,b})}}
+drag=null;dl();rj()});
+document.addEventListener('keydown',e=>{if((e.key=='Delete'||e.key=='Backspace')&&sel&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))rm(sel)});
+function rm(id){nodes=nodes.filter(n=>n.id!=id);links=links.filter(l=>l.a!=id&&l.b!=id);sel=null;rn();rp()}
+cv.addEventListener('dragover',e=>e.preventDefault());
+cv.addEventListener('drop',e=>{e.preventDefault();const t=e.dataTransfer.getData('t');if(!D[t])return;const w=wp(e);const n=add(t,Math.max(0,Math.round((w.x-W/2)/10)*10),Math.max(0,Math.round((w.y-20)/10)*10));rn();pick(n.id)});
+// палитра
+[['t','Триггеры','когда запускать'],['a','Действия','что делать'],['c','Условия','когда можно запускать']].forEach(([k,n,h])=>{
+$('#pal').insertAdjacentHTML('beforeend',`<h4>${n}</h4><div class="mu">${h}</div>`+Object.keys(D).filter(t=>D[t].k==k).map(t=>`<div class="pi ${k}" draggable="true" data-t="${t}">${D[t].n}</div>`).join(''))});
+$('#pal').addEventListener('dragstart',e=>{const p=e.target.closest('.pi');if(p)e.dataTransfer.setData('t',p.dataset.t)});
+$('#pal').addEventListener('click',e=>{const p=e.target.closest('.pi');if(!p)return;const c=nodes.length;const n=add(p.dataset.t,60+(c%6)*30+cv.scrollLeft,60+(c%6)*30+cv.scrollTop);rn();pick(n.id)});
+// панель
+function rp(){P.oninput=null;
+if(tab=='j'){P.innerHTML=`<button class="b" id="cp">Копировать JSON</button><pre>${esc(JSON.stringify(build(),null,2))}</pre>`;$('#cp').onclick=()=>{const t=JSON.stringify(build());const done=()=>{$('#cp').textContent='Скопировано'};try{navigator.clipboard.writeText(t).then(done,()=>{})}catch(_){}};return}
+const n=nodes.find(x=>x.id==sel);
+if(!n){P.innerHTML=`<label>Описание макроса<textarea id="ds">${esc(meta.desc)}</textarea></label><p class="mu">Выберите блок на холсте, чтобы изменить его настройки. Порядок действий задаёт цепочка связей от триггера. Условия действуют на весь макрос.</p><p class="mu">Блоков: ${nodes.length}, связей: ${links.length}</p>`;$('#ds').oninput=e=>{meta.desc=e.target.value};return}
+const d=D[n.t];
+P.innerHTML=`<h3 class="${d.k}">${d.n}</h3><p class="mu">${d.h}</p>`+d.f.map(f=>`<label>${f[1]}`+(f[2]=='x'?`<select data-k="${f[0]}">${f[4].map(o=>`<option value="${o[0]}"${o[0]==n.p[f[0]]?' selected':''}>${o[1]}</option>`).join('')}</select>`:`<input data-k="${f[0]}" type="${f[2]=='n'?'number':'text'}" value="${esc(n.p[f[0]])}">`)+'</label>').join('')+`<button class="b del" id="rm">Удалить блок</button>`;
+P.oninput=e=>{const k=e.target.dataset.k;if(!k)return;n.p[k]=e.target.value;const s=wd.querySelector(`[data-id="${n.id}"] span`);if(s)s.textContent=d.s(n.p)};
+$('#rm').onclick=()=>rm(n.id)}
+const rj=()=>{if(tab=='j')rp()};
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',x==b));rp()});
+// экспорт в формат MacroDroid
+function build(){
+const tr=nodes.filter(n=>D[n.t].k=='t'),ac=nodes.filter(n=>D[n.t].k=='a'),co=nodes.filter(n=>D[n.t].k=='c');
+const order=[],seen=new Set(),walk=id=>links.filter(l=>l.a==id).forEach(l=>{if(!seen.has(l.b)){seen.add(l.b);order.push(l.b);walk(l.b)}});
+tr.forEach(n=>walk(n.id));ac.filter(n=>!seen.has(n.id)).sort((a,b)=>a.x-b.x||a.y-b.y).forEach(n=>order.push(n.id));
+const mk=(n,g)=>({m_classType:n.t,m_SIGUID:g||0,...D[n.t].o(n.p)});
+const acts=order.map(id=>nodes.find(n=>n.id==id)).filter(n=>D[n.t].k=='a').map(n=>mk(n));
+return{macroExportVersion:1,macro:{m_name:meta.name,m_description:meta.desc||meta.name,m_enabled:true,m_completed:true,m_GUID:0,aiGenerated:1,
+m_triggerList:tr.length?tr.map((n,i)=>mk(n,112233445566771+i)):[{m_classType:'EmptyTrigger',m_SIGUID:0}],
+m_actionList:acts,m_constraintList:co.map(n=>mk(n))},globalVariables:[],userIcons:null,aiFeedback:'Собрано в визуальном редакторе. Все триггеры запускают одну общую цепочку действий.'}}
+// шаблоны и шапка
+function load(name){const t=T[name];nodes=[];links=[];nid=1;sel=null;const ids=t.n.map(([k,x,y,p])=>add(k,x,y,p).id);t.l.forEach(([a,b])=>links.push({a:ids[a],b:ids[b]}));meta.name=name;$('#nm').value=name;rn();rp()}
+Object.keys(T).forEach(k=>$('#tp').insertAdjacentHTML('beforeend',`<option>${k}</option>`));
+$('#tp').onchange=e=>{if(e.target.value)load(e.target.value);e.target.value=''};
+$('#clr').onclick=()=>{nodes=[];links=[];sel=null;nid=1;rn();rp()};
+$('#nm').oninput=e=>{meta.name=e.target.value;rj()};
+load('Wi‑Fi по расписанию');
+</script></body></html>
