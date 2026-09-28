@@ -1,154 +1,450 @@
 <!DOCTYPE html>
 <html lang="ru"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Редактор макросов</title>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<title>drmMD — визуальный редактор макросов MacroDroid</title>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#EEF1F5;--pn:#fff;--ink:#16202E;--mu:#5B6878;--ln:#D5DBE4;--t:#0E8A7D;--a:#4B5BD8;--c:#B7791F;--dot:#C9D1DC;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151C;--pn:#171E27;--ink:#E6EBF2;--mu:#93A0B2;--ln:#2A3441;--t:#3CC4B4;--a:#8A97F5;--c:#E0A83C;--dot:#263140}}
-:root[data-theme="dark"]{--bg:#10151C;--pn:#171E27;--ink:#E6EBF2;--mu:#93A0B2;--ln:#2A3441;--t:#3CC4B4;--a:#8A97F5;--c:#E0A83C;--dot:#263140}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
+:root{--bg:#EEF1F5;--pn:#fff;--ink:#16202E;--mu:#5B6878;--ln:#D5DBE4;--t:#0E8A7D;--a:#4B5BD8;--c:#B7791F;--f:#7C3AED;--dot:#C9D1DC;--glass:rgba(255,255,255,.72);--sh:0 8px 28px rgba(20,30,50,.12)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0D1219;--pn:#161D28;--ink:#E6EBF2;--mu:#93A0B2;--ln:#2A3441;--t:#3CC4B4;--a:#8A97F5;--c:#E0A83C;--f:#A78BFA;--dot:#263140;--glass:rgba(22,29,40,.72);--sh:0 8px 28px rgba(0,0,0,.45)}}
+:root[data-theme="dark"]{--bg:#0D1219;--pn:#161D28;--ink:#E6EBF2;--mu:#93A0B2;--ln:#2A3441;--t:#3CC4B4;--a:#8A97F5;--c:#E0A83C;--f:#A78BFA;--dot:#263140;--glass:rgba(22,29,40,.72);--sh:0 8px 28px rgba(0,0,0,.45)}
+*{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font:14px/1.4 Onest,system-ui,sans-serif}
-header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--pn);border-bottom:1px solid var(--ln)}
-header input{font-weight:600;font-size:15px;width:230px;max-width:100%}
-input,select,textarea{display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:7px 8px;border:1px solid var(--ln);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
-header input,header select{margin:0;width:auto}
+body{display:flex;flex-direction:column;background:var(--bg);color:var(--ink);font:14px/1.4 Onest,system-ui,sans-serif;overflow:hidden}
+header{display:flex;gap:8px;align-items:center;padding:9px 14px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--ln);position:relative;z-index:30;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;letter-spacing:.2px;margin-right:4px;white-space:nowrap}
+.logo svg{width:24px;height:24px;color:var(--a)}
+#nm{font-weight:600;font-size:15px;width:220px;max-width:36vw;padding:7px 10px;border:1px solid var(--ln);border-radius:8px;background:var(--pn);color:var(--ink);font-family:inherit}
+select,input,textarea{display:block;width:100%;padding:7px 8px;border:1px solid var(--ln);border-radius:8px;background:var(--pn);color:var(--ink);font:inherit}
+header select{width:auto;margin:0}
 textarea{min-height:70px;resize:vertical}
 :focus-visible{outline:2px solid var(--a);outline-offset:1px}
-.b{padding:7px 12px;border:1px solid var(--ln);border-radius:6px;background:var(--pn);color:var(--ink);font:inherit;cursor:pointer}
+.b{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--ln);border-radius:8px;background:var(--pn);color:var(--ink);font:inherit;cursor:pointer;white-space:nowrap;transition:border-color .15s,background .15s}
 .b:hover{border-color:var(--a)}
-.del{margin-top:16px;color:#C2410C}
-main{flex:1;min-height:0;display:grid;grid-template-columns:220px 1fr 310px}
-aside{background:var(--pn);overflow:auto;padding:12px}
-#pal{border-right:1px solid var(--ln)}#pn{border-left:1px solid var(--ln)}
-aside h4{margin:14px 0 2px;font-size:13px}aside h4:first-child{margin-top:0}
+.b svg{width:15px;height:15px;flex:none}
+.b.pri{background:var(--a);border-color:var(--a);color:#fff}
+.b.pri:hover{filter:brightness(1.1)}
+.menu{position:relative}
+.pop{position:absolute;top:calc(100% + 6px);right:0;min-width:230px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--ln);border-radius:10px;box-shadow:var(--sh);padding:6px;display:none;z-index:50}
+.pop.open{display:block}
+.pop button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:8px 10px;border:0;border-radius:7px;background:none;color:var(--ink);font:inherit;cursor:pointer}
+.pop button:hover{background:var(--bg)}
+.pop button svg{width:15px;height:15px;color:var(--mu);flex:none}
+.pop hr{border:0;border-top:1px solid var(--ln);margin:5px 4px}
+.pop .hint2{font-size:11px;color:var(--mu);padding:2px 10px 8px}
+main{flex:1;min-height:0;display:grid;grid-template-columns:248px 1fr 330px}
+aside{background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);overflow:hidden;padding:0;display:flex;flex-direction:column}
+#pal{border-right:1px solid var(--ln)}
+#pnr{border-left:1px solid var(--ln)}
+.pal-search{padding:10px 10px 6px;flex:none}
+.pal-search input{background:var(--bg);border-radius:18px;padding:7px 12px}
+.pal-scroll{flex:1;overflow:auto;padding:4px 12px 16px}
+.pal-scroll h4{margin:14px 0 2px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mu);display:flex;align-items:center;gap:6px}
+.pal-scroll h4:first-child{margin-top:4px}
+.pal-scroll h4 i{width:8px;height:8px;border-radius:3px;background:var(--kc);display:inline-block}
 .mu{color:var(--mu);font-size:12px;margin:2px 0 8px}
-.pi{padding:7px 10px;margin:5px 0;border:1px solid var(--ln);border-left:4px solid var(--kc);border-radius:6px;cursor:grab;background:var(--bg)}
-.pi:hover{border-color:var(--kc)}
-.t{--kc:var(--t)}.a{--kc:var(--a)}.c{--kc:var(--c)}
-h3.t,h3.a,h3.c{margin:0 0 2px;font-size:16px;color:var(--kc)}
-#cv{overflow:auto;position:relative;background:radial-gradient(var(--dot) 1px,transparent 1px) 0 0/20px 20px}
-#world{position:relative;width:2200px;height:1400px}
-#wd,#lk{position:absolute;inset:0}
-#wd{pointer-events:none}#lk{pointer-events:none;width:2200px;height:1400px}
+.pi{display:flex;align-items:center;gap:9px;padding:7px 9px;margin:5px 0;border:1px solid var(--ln);border-left:3px solid var(--kc);border-radius:9px;cursor:grab;background:var(--pn);transition:transform .12s,border-color .15s,box-shadow .15s}
+.pi:hover{border-color:var(--kc);box-shadow:var(--sh);transform:translateY(-1px)}
+.pi:active{cursor:grabbing}
+.pi .ic{width:26px;height:26px;flex:none;border-radius:7px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:var(--kc)}
+.pi .ic svg{width:16px;height:16px}
+.pi .tx{min-width:0}
+.pi b{display:block;font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pi small{display:block;color:var(--mu);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t{--kc:var(--t)}.a{--kc:var(--a)}.c{--kc:var(--c)}.f{--kc:var(--f)}
+h3.t,h3.a,h3.c,h3.f{margin:0 0 2px;font-size:16px;color:var(--kc);display:flex;align-items:center;gap:8px}
+h3 svg{width:18px;height:18px}
+#cvWrap{position:relative;overflow:hidden;background:radial-gradient(var(--dot) 1px,transparent 1px) 0 0/22px 22px}
+#world{position:absolute;left:0;top:0;transform-origin:0 0;width:0;height:0}
+#wd,#lk{position:absolute;left:0;top:0}
+#wd{pointer-events:none;width:0;height:0}
+#lk{pointer-events:none;overflow:visible;width:1px;height:1px}
 .lk{fill:none;stroke:var(--mu);stroke-width:2.5;pointer-events:stroke;cursor:pointer}.lk:hover{stroke:var(--a);stroke-width:4}
+.lk.br{stroke-dasharray:6 5}
 .tmp{fill:none;stroke:var(--a);stroke-width:2;stroke-dasharray:5 4}
-.nd{position:absolute;width:200px;box-sizing:border-box;padding:8px 12px 9px 14px;background:var(--pn);border:1px solid var(--ln);border-left:4px solid var(--kc);border-radius:8px;cursor:grab;user-select:none;touch-action:none;pointer-events:auto}
-.nd.c{border-style:dashed;border-left-style:solid}
-.nd b{display:block;font-weight:600}.nd span{display:block;color:var(--mu);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nd.sel{box-shadow:0 0 0 2px var(--kc)}
-.pt{position:absolute;top:16px;width:12px;height:12px;border-radius:50%;background:var(--pn);border:2px solid var(--kc);cursor:crosshair}
-.pt:hover{background:var(--kc)}.pt.in{left:-9px}.pt.out{right:-9px}
-label{display:block;margin-top:10px;color:var(--mu);font-size:12px}
-.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs .b[aria-pressed=true]{background:var(--a);color:#fff;border-color:var(--a)}
-pre{margin:10px 0 0;font:11px/1.45 "JetBrains Mono",ui-monospace,monospace;white-space:pre-wrap;word-break:break-all}
-#hint{position:absolute;left:40px;top:40px;color:var(--mu);max-width:340px}
-@media (max-width:860px){main{grid-template-columns:1fr;grid-template-rows:auto minmax(300px,1fr) 260px}#pal{border-right:0;border-bottom:1px solid var(--ln);max-height:150px}#pn{border-left:0;border-top:1px solid var(--ln)}}
+.nd{position:absolute;width:210px;padding:9px 12px 10px 14px;background:var(--pn);border:1px solid var(--ln);border-left:4px solid var(--kc);border-radius:11px;cursor:grab;user-select:none;touch-action:none;pointer-events:auto;box-shadow:0 2px 10px rgba(10,20,40,.09)}
+.nd:hover{box-shadow:var(--sh)}
+.nd.c,.nd.f{border-style:dashed;border-left-style:solid}
+.nd b{display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px}
+.nd b svg{width:15px;height:15px;color:var(--kc);flex:none}
+.nd .sub{display:block;color:var(--mu);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nd .badge{display:inline-block;margin-top:4px;font-size:10px;font-weight:600;padding:1px 7px;border-radius:9px;background:var(--bg);color:var(--kc);border:1px solid var(--kc)}
+.nd.sel{box-shadow:0 0 0 2px var(--kc),var(--sh)}
+.pt{position:absolute;top:16px;width:13px;height:13px;border-radius:50%;background:var(--pn);border:2.5px solid var(--kc);cursor:crosshair;transition:transform .1s}
+.pt:hover{background:var(--kc);transform:scale(1.25)}
+.pt.in{left:-9px}.pt.out{right:-9px}
+label{display:block;margin-top:10px;color:var(--mu);font-size:12px;font-weight:500}
+.tabs{display:flex;gap:6px;padding:10px 12px 0;flex:none}
+.tabs .b[aria-pressed=true]{background:var(--a);color:#fff;border-color:var(--a)}
+#pnr .pane{flex:1;overflow:auto;padding:12px}
+pre{margin:10px 0 0;font:11px/1.45 "JetBrains Mono",ui-monospace,monospace;white-space:pre-wrap;word-break:break-all;background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:10px}
+.zoombar{position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:4px;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--ln);border-radius:10px;padding:4px;box-shadow:var(--sh);z-index:20}
+.zoombar button{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:0;border-radius:7px;background:none;color:var(--ink);cursor:pointer;font-size:16px}
+.zoombar button:hover{background:var(--bg)}
+.zoombar button svg{width:15px;height:15px}
+#zlbl{min-width:46px;text-align:center;font-size:12px;color:var(--mu);cursor:pointer;font-variant-numeric:tabular-nums}
+.hintcard{position:absolute;left:50%;top:34%;transform:translate(-50%,-50%);max-width:400px;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--ln);border-radius:14px;padding:18px 22px;color:var(--mu);z-index:5;box-shadow:var(--sh);font-size:13px;line-height:1.55}
+.hintcard b{color:var(--ink)}
+kbd{font:11px "JetBrains Mono",monospace;background:var(--bg);border:1px solid var(--ln);border-bottom-width:2px;border-radius:5px;padding:1px 5px;color:var(--ink)}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:100;max-width:80vw;box-shadow:var(--sh)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#modal{position:fixed;inset:0;background:rgba(8,12,20,.55);display:none;align-items:center;justify-content:center;z-index:90;backdrop-filter:blur(3px)}
+#modal.open{display:flex}
+.mbox{background:var(--pn);border:1px solid var(--ln);border-radius:14px;box-shadow:var(--sh);width:min(680px,92vw);max-height:82vh;display:flex;flex-direction:column}
+.mbox header{background:var(--pn);border-bottom:1px solid var(--ln);padding:12px 16px;border-radius:14px 14px 0 0}
+.mbox .mbody{padding:14px 16px;overflow:auto}
+.mbox textarea{font:12px/1.45 "JetBrains Mono",monospace;min-height:260px}
+.mbox .mfoot{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--ln)}
+.warn-list{font-size:12px;color:var(--c);margin:8px 0 0;padding-left:18px}
+.del{margin-top:16px;color:#C2410C;border-color:#C2410C44}
+.tabs .b{padding:5px 9px;font-size:12px}
+.ph{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:13px;color:var(--mu)}
+.ph b{color:var(--ink)}
+.vsec{margin:12px 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--mu);font-weight:600}
+.vitem{display:flex;gap:9px;align-items:flex-start;background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:8px 10px;margin-top:7px;font-size:12.5px}
+.vitem .ic{width:26px;height:26px;flex:none;border-radius:7px;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.vitem .ic svg{width:15px;height:15px}
+.vitem.t .ic{color:var(--t)}.vitem.a .ic{color:var(--a)}.vitem.c .ic{color:var(--c)}.vitem.f .ic{color:var(--f)}
+.vitem small{display:block;color:var(--mu);margin-top:1px;word-break:break-word}
+.vflow{font-size:11px;color:var(--mu);margin-top:3px}
+.vbadges{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.vbadge{font-size:11px;padding:2px 8px;border-radius:9px;border:1px solid var(--ln);background:var(--pn);color:var(--mu)}
+.vbadge.err{color:#E5484D;border-color:#E5484D66}.vbadge.ok{color:var(--t);border-color:var(--t)}
+.diffadd{color:var(--t);font-weight:600}.diffdel{color:#E5484D;font-weight:600;text-decoration:line-through}.diffchg{color:var(--c);font-weight:600}
+.drow{display:flex;gap:8px;align-items:baseline;padding:6px 8px;border-bottom:1px dashed var(--ln);font-size:12.5px}
+.drow:last-child{border-bottom:0}
+.dtag{font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;flex:none;border:1px solid currentColor}
+.dnum{font-size:11px;color:var(--mu);min-width:22px;text-align:right;font-variant-numeric:tabular-nums}
+.dtxt{word-break:break-word}
+.dold{color:var(--mu)}
+.dnew{color:var(--ink)}
+.arrowd{color:var(--mu)}
+.dbefore{font-size:12px;color:var(--mu);margin:6px 0 2px}
+.dbefore button{display:inline;border:0;background:none;color:var(--a);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
+.del:hover{background:#C2410C11}
+@media (max-width:960px){main{grid-template-columns:1fr;grid-template-rows:auto minmax(260px,1fr) 240px}#pal{border-right:0;border-bottom:1px solid var(--ln);max-height:170px}#pnr{border-left:0;border-top:1px solid var(--ln)}}
 </style></head><body>
 <header>
-<input id="nm" aria-label="Название макроса">
-<select id="tp" aria-label="Шаблоны"><option value="">Шаблоны макросов…</option></select>
-<button class="b" id="clr">Очистить холст</button>
+<span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>drmMD</span>
+<input id="nm" aria-label="Название макроса" placeholder="Название макроса">
+<select id="tp" aria-label="Шаблоны"><option value="">Шаблоны…</option></select>
+<button class="b" id="clr" title="Очистить холст"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h6l1-14"/></svg>Очистить</button>
+<span style="flex:1"></span>
+<div class="menu"><button class="b" id="btnFile">Файл<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></button>
+<div class="pop" id="popFile">
+<button data-a="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Новый макрос</button>
+<button data-a="open"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h16M12 4v12m0 0 4-4m-4 4-4-4"/></svg>Импорт из файла…</button>
+<button data-a="paste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/></svg>Импорт из буфера обмена</button>
+<hr>
+<button data-a="md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v12m0 0 4-4m-4 4-4-4M4 20h16"/></svg>Экспорт MacroDroid (.macro)</button>
+<button data-a="proj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v12m0 0 4-4m-4 4-4-4M4 20h16"/></svg>Сохранить проект (.drmmd.json)</button>
+<button data-a="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Копировать JSON MacroDroid</button>
+<hr>
+<div class="hint2">Ctrl+S — быстрый экспорт MacroDroid</div>
+</div></div>
+<div class="menu"><button class="b" id="btnTheme" title="Тема"><svg id="thIco" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/></svg></button>
+<div class="pop" id="popTheme" style="min-width:150px">
+<button data-th="auto">Системная</button><button data-th="light">Светлая</button><button data-th="dark">Тёмная</button>
+</div></div>
 </header>
 <main>
-<aside id="pal"></aside>
-<div id="cv"><div id="world"><svg id="lk"></svg><div id="wd"></div><div id="hint">Перетащите блок из палитры на холст. Чтобы связать действия, потяните от кружка справа к кружку слева.</div></div></div>
-<aside><div class="tabs"><button class="b" data-tab="p" aria-pressed="true">Настройки</button><button class="b" data-tab="j" aria-pressed="false">JSON</button></div><div id="pn" style="border:0;padding:0"></div></aside>
+<aside id="pal"><div class="pal-search"><input id="pq" placeholder="Поиск блоков…" aria-label="Поиск блоков"></div><div class="pal-scroll" id="palList"></div></aside>
+<div id="cvWrap"><div id="world"><svg id="lk"></svg><div id="wd"></div></div>
+<div class="hintcard" id="hint"><b>Пустой холст.</b><br>Перетащите блок из палитры слева или кликните по нему. Соединяйте действия: тяните от кружка <b>справа</b> блока к кружку <b>слева</b> следующего.<br><br>Условия (жёлтые) действуют на весь макрос; блоки потока (фиолетовые) If / Loop выстраивайте по порядку выполнения.<br><br><kbd>Del</kbd> удалить · <kbd>Ctrl+колесо</kbd> зум · <kbd>Ctrl+S</kbd> экспорт · <kbd>D</kbd> тема</div>
+<div class="zoombar">
+<button id="zout" title="Отдалить">−</button><div id="zlbl" title="Сброс масштаба">100%</div><button id="zin" title="Приблизить">+</button>
+<button id="zfit" title="Вписать в экран"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+<button id="zcenter" title="К блокам"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button>
+</div></div>
+<aside id="pnr"><div class="tabs"><button class="b" data-tab="p" aria-pressed="true">Настройки</button><button class="b" data-tab="v" aria-pressed="false">Предпросмотр</button><button class="b" data-tab="d" aria-pressed="false">Разница</button><button class="b" data-tab="j" aria-pressed="false">JSON</button></div><div class="pane" id="pn"></div></aside>
 </main>
+<div id="toast"></div>
+<div id="modal"><div class="mbox"><header><b id="mTitle"></b></header><div class="mbody" id="mBody"></div><div class="mfoot"><button class="b" id="mClose">Закрыть</button><button class="b pri" id="mOk" hidden>Применить</button></div></div></div>
+<input type="file" id="fIn" accept=".macro,.json,.drmmd,application/json,text/plain" hidden>
 <script>
-const $=s=>document.querySelector(s),pad=n=>String(n).padStart(2,'0'),W=200;
+const $=s=>document.querySelector(s),pad=n=>String(n).padStart(2,'0'),W=210;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const lab=(a,v)=>(a.find(o=>o[0]==v)||[])[1]??v;
+let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600)}
+// ===== Иконки (SVG-пути) =====
+const IC={clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',wifi:'<path d="M5 12.5a10 10 0 0 1 14 0M8 15.5a6 6 0 0 1 8 0"/><circle cx="12" cy="18.5" r="1.3"/>',bat:'<rect x="2" y="8" width="17" height="8" rx="2"/><path d="M22 11v2M6 11v2m3-2v2"/>',plug:'<path d="M9 2v6m6-6v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/>',bell:'<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 19a2 2 0 0 0 4 0"/>',scr:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8"/>',pop:'<rect x="4" y="8" width="16" height="8" rx="4"/>',bt:'<path d="m7 7 10 10-5 4V3l5 4L7 17"/>',pause:'<path d="M9 5v14M15 5v14"/>',vib:'<path d="M4 9v6m3-9v12m5-14v16m5-12v8m4-5v2"/>',app:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4m8-4v4"/>',if:'<path d="M4 5v6a3 3 0 0 0 3 3h4m7-9-4 4 4 4"/>',loop:'<path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',brk:'<path d="M4 17h6a3 3 0 0 0 3-3V9"/><path d="m10 13 3-4 3 4"/><path d="M16 17h4"/>',end:'<rect x="5" y="5" width="14" height="14" rx="3"/><path d="M9 12h6"/>',raw:'<path d="m8 9-4 3 4 3m8-6 4 3-4 3"/>',gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.9 4.9l2.1 2.1m10 10 2.1 2.1M4.9 19.1l2.1-2.1m10-10 2.1-2.1"/>'};
+const ic=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${IC[k]||IC.gear}</svg>`;
+// ===== Данные =====
 const DAYS=[['all','каждый день'],['wd','по будням'],['we','по выходным']];
 const tDays=v=>v=='wd'?[1,1,1,1,1,0,0].map(Boolean):v=='we'?[0,0,0,0,0,1,1].map(Boolean):Array(7).fill(true);
 const cDays=v=>v=='wd'?[0,1,1,1,1,1,0].map(Boolean):v=='we'?[1,0,0,0,0,0,1].map(Boolean):Array(7).fill(true);
 const ON=[[0,'включить'],[1,'выключить'],[2,'переключить']];
 const WS=[[2,'подключился к сети'],[3,'отключился от сети'],[0,'Wi‑Fi включён'],[1,'Wi‑Fi выключен']];
 const GT=[[1,'больше'],[0,'меньше']];
-// Определения блоков: k=вид (t/a/c), f=поля [ключ, подпись, тип(n/s/x), значение, варианты], s=краткое описание, o=свойства для JSON
+const LOPT=[[0,'фиксированное число'],[1,'пока верно (while)'],[2,'do-while'],[3,'бесконечный'],[4,'по времени']];
+const UNIT=[[0,'секунды'],[1,'минуты'],[2,'часы']];
+// Определения блоков: k=вид(t/a/c/f), n=имя, i=иконка, h=справка, f=поля [ключ,подпись,тип,значение,варианты], s=описание, o=props для JSON, cl=принимает вложенные условия
 const D={
-TimerTrigger:{k:'t',n:'Таймер',h:'Срабатывает в заданное время.',f:[['h','Час (0–23)','n',7],['m','Минута','n',0],['d','Дни','x','all',DAYS]],s:p=>`${pad(p.h)}:${pad(p.m)}, ${lab(DAYS,p.d)}`,o:p=>({m_hour:+p.h,m_minute:+p.m,m_daysOfWeek:tDays(p.d),m_useAlarm:true})},
-WifiConnectionTrigger:{k:'t',n:'Wi‑Fi',h:'Изменилось состояние Wi‑Fi.',f:[['w','Событие','x',2,WS],['ssid','Сеть (SSID)','s','Home']],s:p=>lab(WS,p.w)+(+p.w>1?': '+p.ssid:''),o:p=>{const o={m_wifiState:+p.w};if(+p.w>1){o.m_SSID=p.ssid;o.m_SSIDList=[p.ssid]}return o}},
-BatteryLevelTrigger:{k:'t',n:'Уровень заряда',h:'Заряд достиг порога.',f:[['dn','Заряд','x',1,[[1,'снижается до'],[0,'растёт до']]],['lv','Уровень, %','n',20]],s:p=>`${+p.dn?'падает до':'растёт до'} ${p.lv}%`,o:p=>({m_decreasesTo:!!+p.dn,m_batteryLevel:+p.lv})},
-ExternalPowerTrigger:{k:'t',n:'Зарядка',h:'Подключили или отключили питание.',f:[['c','Питание','x',1,[[1,'подключено'],[0,'отключено']]]],s:p=>+p.c?'питание подключено':'питание отключено',o:p=>({m_powerConnected:!!+p.c,m_powerConnectedOptions:[true,true,true],m_hasSetNewPowerConnectedOptions:true,m_hasSetUSBOption:true})},
-NotificationTrigger:{k:'t',n:'Уведомление',h:'Пришло уведомление от приложения.',f:[['pk','Пакет приложения','s','com.whatsapp'],['tx','Текст содержит','s','']],s:p=>p.pk+(p.tx?' · «'+p.tx+'»':''),o:p=>({m_option:0,m_packageNameList:[p.pk],m_applicationNameList:[p.pk],...(p.tx?{separateTitleAndMessage:true,matchOptionTitle:0,matchOptionMessage:2,messageContent:p.tx}:{})})},
-ScreenOnOffTrigger:{k:'t',n:'Экран',h:'Экран включился или выключился.',f:[['on','Экран','x',1,[[1,'включился'],[0,'выключился']]]],s:p=>+p.on?'включился':'выключился',o:p=>({m_screenOn:!!+p.on})},
-NotificationAction:{k:'a',n:'Уведомление',h:'Показывает системное уведомление.',f:[['sj','Заголовок','s','Готово'],['tx','Текст','s','Макрос выполнен']],s:p=>p.sj,o:p=>({m_notificationSubject:p.sj,m_notificationText:p.tx,m_overwriteExisting:true})},
-ToastAction:{k:'a',n:'Всплывающее сообщение',h:'Короткая подсказка на экране.',f:[['tx','Сообщение','s','Привет!'],['du','Длительность','x',2,[[2,'короткая'],[0,'длинная']]]],s:p=>p.tx,o:p=>({m_messageText:p.tx,m_duration:+p.du})},
-SetWifiAction:{k:'a',n:'Wi‑Fi',h:'Включает или выключает Wi‑Fi.',f:[['st','Действие','x',0,ON]],s:p=>lab(ON,p.st),o:p=>({m_state:+p.st})},
-SetBluetoothAction:{k:'a',n:'Bluetooth',h:'Включает или выключает Bluetooth.',f:[['st','Действие','x',0,ON]],s:p=>lab(ON,p.st),o:p=>({m_state:+p.st})},
-PauseAction:{k:'a',n:'Пауза',h:'Ждёт перед следующим действием.',f:[['sec','Секунд','n',2]],s:p=>p.sec+' с',o:p=>({m_delayInSeconds:+p.sec,m_useAlarm:true})},
-VibrateAction:{k:'a',n:'Вибрация',h:'Вибрация с выбранным рисунком.',f:[['v','Рисунок','x',1,[[0,'щелчок'],[1,'короткая'],[2,'длинная'],[3,'частая']]]],s:p=>lab([[0,'щелчок'],[1,'короткая'],[2,'длинная'],[3,'частая']],p.v),o:p=>({m_vibratePattern:+p.v})},
-LaunchActivityAction:{k:'a',n:'Запуск приложения',h:'Открывает приложение по имени пакета.',f:[['pk','Пакет приложения','s','com.android.chrome']],s:p=>p.pk,o:p=>({option:1,launchByPackageName:p.pk,m_packageToLaunch:p.pk,m_applicationName:p.pk})},
-SetBrightnessAction:{k:'a',n:'Яркость',h:'Задаёт яркость экрана.',f:[['b','Яркость, %','n',50]],s:p=>p.b+'%',o:p=>({setAutoBrightness:false,setBrightnessValue:true,m_brightnessPercent:+p.b,migrated:true})},
-BatteryLevelConstraint:{k:'c',n:'Уровень заряда',h:'Макрос выполняется, только если заряд подходит.',f:[['g','Заряд','x',1,GT],['lv','Уровень, %','n',20]],s:p=>`${lab(GT,p.g)} ${p.lv}%`,o:p=>({m_greaterThan:!!+p.g,m_equals:false,m_batteryLevel:+p.lv})},
-TimeOfDayConstraint:{k:'c',n:'Время суток',h:'Макрос выполняется только в этом окне.',f:[['a','С, час','n',22],['am','Минуты','n',0],['b','До, час','n',7],['bm','Минуты','n',0]],s:p=>`${pad(p.a)}:${pad(p.am)}–${pad(p.b)}:${pad(p.bm)}`,o:p=>({m_startHour:+p.a,m_startMinute:+p.am,m_endHour:+p.b,m_endMinute:+p.bm})},
-DayOfWeekConstraint:{k:'c',n:'День недели',h:'Макрос выполняется только в эти дни.',f:[['d','Дни','x','wd',DAYS]],s:p=>lab(DAYS,p.d),o:p=>({m_daysOfWeek:cDays(p.d)})}
+TimerTrigger:{k:'t',n:'Таймер',i:'clock',h:'Срабатывает в заданное время.',f:[['h','Час (0–23)','n',7],['m','Минута','n',0],['d','Дни','x','all',DAYS]],s:p=>`${pad(p.h)}:${pad(p.m)}, ${lab(DAYS,p.d)}`,o:p=>({m_hour:+p.h,m_minute:+p.m,m_daysOfWeek:tDays(p.d),m_useAlarm:true})},
+WifiConnectionTrigger:{k:'t',n:'Wi‑Fi',i:'wifi',h:'Изменилось состояние Wi‑Fi.',f:[['w','Событие','x',2,WS],['ssid','Сеть (SSID)','s','Home']],s:p=>lab(WS,p.w)+(+p.w>1?': '+p.ssid:''),o:p=>{const o={m_wifiState:+p.w};if(+p.w>1){o.m_SSID=p.ssid;o.m_SSIDList=[p.ssid]}return o}},
+BatteryLevelTrigger:{k:'t',n:'Уровень заряда',i:'bat',h:'Заряд достиг порога.',f:[['dn','Заряд','x',1,[[1,'снижается до'],[0,'растёт до']]],['lv','Уровень, %','n',20]],s:p=>`${+p.dn?'падает до':'растёт до'} ${p.lv}%`,o:p=>({m_decreasesTo:!!+p.dn,m_batteryLevel:+p.lv})},
+ExternalPowerTrigger:{k:'t',n:'Зарядка',i:'plug',h:'Подключили или отключили питание.',f:[['c','Питание','x',1,[[1,'подключено'],[0,'отключено']]]],s:p=>+p.c?'питание подключено':'питание отключено',o:p=>({m_powerConnected:!!+p.c,m_powerConnectedOptions:[true,true,true],m_hasSetNewPowerConnectedOptions:true,m_hasSetUSBOption:true})},
+NotificationTrigger:{k:'t',n:'Уведомление',i:'bell',h:'Пришло уведомление от приложения.',f:[['pk','Пакет приложения','s','com.whatsapp'],['tx','Текст содержит','s','']],s:p=>p.pk+(p.tx?' · «'+p.tx+'»':''),o:p=>({m_option:0,m_packageNameList:[p.pk],m_applicationNameList:[p.pk],...(p.tx?{separateTitleAndMessage:true,matchOptionTitle:0,matchOptionMessage:2,messageContent:p.tx}:{})})},
+ScreenOnOffTrigger:{k:'t',n:'Экран',i:'scr',h:'Экран включился или выключился.',f:[['on','Экран','x',1,[[1,'включился'],[0,'выключился']]]],s:p=>+p.on?'включился':'выключился',o:p=>({m_screenOn:!!+p.on})},
+NotificationAction:{k:'a',n:'Уведомление',i:'bell',h:'Показывает системное уведомление.',f:[['sj','Заголовок','s','Готово'],['tx','Текст','s','Макрос выполнен']],s:p=>p.sj,o:p=>({m_notificationSubject:p.sj,m_notificationText:p.tx,m_overwriteExisting:true})},
+ToastAction:{k:'a',n:'Всплывающее сообщение',i:'pop',h:'Короткая подсказка на экране.',f:[['tx','Сообщение','s','Привет!'],['du','Длительность','x',2,[[2,'короткая'],[0,'длинная']]]],s:p=>p.tx,o:p=>({m_messageText:p.tx,m_duration:+p.du})},
+SetWifiAction:{k:'a',n:'Wi‑Fi',i:'wifi',h:'Включает или выключает Wi‑Fi.',f:[['st','Действие','x',0,ON]],s:p=>lab(ON,p.st),o:p=>({m_state:+p.st})},
+SetBluetoothAction:{k:'a',n:'Bluetooth',i:'bt',h:'Включает или выключает Bluetooth.',f:[['st','Действие','x',0,ON]],s:p=>lab(ON,p.st),o:p=>({m_state:+p.st})},
+PauseAction:{k:'a',n:'Пауза',i:'pause',h:'Ждёт перед следующим действием.',f:[['sec','Секунд','n',2]],s:p=>p.sec+' с',o:p=>({m_delayInSeconds:+p.sec,m_useAlarm:true})},
+VibrateAction:{k:'a',n:'Вибрация',i:'vib',h:'Вибрация с выбранным рисунком.',f:[['v','Рисунок','x',1,[[0,'щелчок'],[1,'короткая'],[2,'длинная'],[3,'частая']]]],s:p=>lab([[0,'щелчок'],[1,'короткая'],[2,'длинная'],[3,'частая']],p.v),o:p=>({m_vibratePattern:+p.v})},
+LaunchActivityAction:{k:'a',n:'Запуск приложения',i:'app',h:'Открывает приложение по имени пакета.',f:[['pk','Пакет приложения','s','com.android.chrome']],s:p=>p.pk,o:p=>({option:1,launchByPackageName:p.pk,m_packageToLaunch:p.pk,m_applicationName:p.pk})},
+SetBrightnessAction:{k:'a',n:'Яркость',i:'sun',h:'Задаёт яркость экрана.',f:[['b','Яркость, %','n',50]],s:p=>p.b+'%',o:p=>({setAutoBrightness:false,setBrightnessValue:true,m_brightnessPercent:+p.b,migrated:true})},
+IfConditionAction:{k:'f',n:'Если (If)',i:'if',h:'Ветка «если». Условие задают вложенные ограничения — привяжите их связью с Alt к этому блоку. Порядок выполнения задают связи (или позиция слева→направо).',f:[['or','Логика','x',0,[[0,'И (все условия)'],[1,'ИЛИ (любое)']]]],s:p=>+p.or?'если любое условие':'если все условия',o:p=>({m_isOrCondition:!!+p.or}),cl:true},
+ElseIfConditionAction:{k:'f',n:'Иначе если (ElseIf)',i:'if',h:'Дополнительная ветка внутри If…EndIf. Также использует связанные ограничения.',f:[['or','Логика','x',0,[[0,'И (все условия)'],[1,'ИЛИ (любое)']]]],s:p=>+p.or?'иначе если любое':'иначе если все',o:p=>({m_isOrCondition:!!+p.or}),cl:true},
+ElseAction:{k:'f',n:'Иначе (Else)',i:'if',h:'Ветка «иначе» между If и EndIf.',f:[],s:()=>'иначе',o:()=>({})},
+EndIfAction:{k:'f',n:'Конец если (EndIf)',i:'end',h:'Закрывает блок If. Обязателен для каждой цепочки If/ElseIf/Else.',f:[],s:()=>'закрыть If',o:()=>({})},
+LoopAction:{k:'f',n:'Цикл (Loop)',i:'loop',h:'Повторяет действия до EndLoopAction. Для while/do-while привяжите ограничение-условие (Alt+связь вниз).',f:[['opt','Тип цикла','x',0,LOPT],['cnt','Повторов','n',5],['dur','Длительность','n',30],['u','Единица','x',0,UNIT]],s:p=>{const o=+p.opt;return o==0?p.cnt+' раз':o==4?p.dur+' '+lab(UNIT,p.u):o==3?'бесконечный':o==1?'while':'do-while'},o:p=>{const o={m_option:+p.opt};if(o.m_option==0)o.m_fixedOptionCount=+p.cnt;if(o.m_option==4){o.timedDurationValue=+p.dur;o.timedTimeUnit=+p.u}return o},cl:true},
+BreakFromLoopAction:{k:'f',n:'Прервать цикл',i:'brk',h:'Выход из текущего цикла (Break).',f:[],s:()=>'break',o:()=>({})},
+ContinueLoopAction:{k:'f',n:'Следующая итерация',i:'brk',h:'Пропустить остаток тела цикла (Continue).',f:[],s:()=>'continue',o:()=>({})},
+EndLoopAction:{k:'f',n:'Конец цикла (EndLoop)',i:'end',h:'Закрывает Loop. Обязателен для каждого LoopAction.',f:[],s:()=>'закрыть цикл',o:()=>({})},
+BatteryLevelConstraint:{k:'c',n:'Уровень заряда',i:'bat',h:'Макрос выполняется, только если заряд подходит.',f:[['g','Заряд','x',1,GT],['lv','Уровень, %','n',20]],s:p=>`${lab(GT,p.g)} ${p.lv}%`,o:p=>({m_greaterThan:!!+p.g,m_equals:false,m_batteryLevel:+p.lv})},
+TimeOfDayConstraint:{k:'c',n:'Время суток',i:'clock',h:'Макрос выполняется только в этом окне.',f:[['a','С, час','n',22],['am','Минуты','n',0],['b','До, час','n',7],['bm','Минуты','n',0]],s:p=>`${pad(p.a)}:${pad(p.am)}–${pad(p.b)}:${pad(p.bm)}`,o:p=>({m_startHour:+p.a,m_startMinute:+p.am,m_endHour:+p.b,m_endMinute:+p.bm})},
+DayOfWeekConstraint:{k:'c',n:'День недели',i:'cal',h:'Макрос выполняется только в эти дни.',f:[['d','Дни','x','wd',DAYS]],s:p=>lab(DAYS,p.d),o:p=>({m_daysOfWeek:cDays(p.d)})},
+WifiConstraint:{k:'c',n:'Wi‑Fi',i:'wifi',h:'Проверяет состояние Wi‑Fi.',f:[['w','Wi‑Fi','x',0,[[0,'включён'],[1,'выключен']]]],s:p=>+p.w?'Wi‑Fi выключен':'Wi‑Fi включён',o:p=>({m_connected:!+p.w})},
+MacroDroidVariableConstraint:{k:'c',n:'Переменная',i:'raw',h:'Сравнение значения переменной MacroDroid.',f:[['vn','Имя переменной','s','my_var'],['op','Сравнение','x',0,[[0,'равно'],[1,'≠'],[2,'больше'],[3,'меньше']]],['vl','Значение','s','1']],s:p=>`{v=${p.vn}} ${lab([[0,'='],[1,'≠'],[2,'>'],[3,'<']],p.op)} ${p.vl}`,o:p=>({m_variable:{m_name:p.vn,m_type:2},m_stringValue:p.vl,m_compareEqual:+p.op==0,m_stringGreaterThan:+p.op==2,m_stringLessThan:+p.op==3})},
+UnknownBlock:{k:'f',n:'Прочее',i:'raw',h:'Блок не распознан редактором. Его исходный JSON сохраняется как есть и попадёт в экспорт без изменений.',f:[],s:p=>p.cls||'неизвестный блок',raw:true}
 };
+const CATS=[['t','Триггеры','когда запускать'],['a','Действия','что делать'],['c','Ограничения','когда можно запускать'],['f','Блоки потока','условия и циклы']];
+// Шаблоны: n=[тип,x,y,props], l=[[i,j]] связи выполнения, cl=[[idxКонстр, idxБлока]],[*] — индекс триггера SIGUID
 const T={
 'Wi‑Fi по расписанию':{n:[['TimerTrigger',40,80,{}],['SetWifiAction',300,80,{}],['NotificationAction',560,80,{sj:'Wi‑Fi',tx:'Wi‑Fi включён'}]],l:[[0,1],[1,2]]},
-'Низкий заряд':{n:[['BatteryLevelTrigger',40,80,{}],['NotificationAction',300,60,{sj:'Низкий заряд',tx:'Подключите зарядку'}],['VibrateAction',560,60,{}],['TimeOfDayConstraint',40,240,{a:8,b:22}]],l:[[0,1],[1,2]]},
-'Пришёл домой':{n:[['WifiConnectionTrigger',40,80,{}],['ToastAction',300,80,{tx:'С возвращением!'}],['PauseAction',560,80,{sec:1}],['LaunchActivityAction',300,220,{pk:'com.spotify.music'}]],l:[[0,1],[1,2],[2,3]]}
+'Низкий заряд':{n:[['BatteryLevelTrigger',40,80,{}],['NotificationAction',300,60,{sj:'Низкий заряд',tx:'Подключите зарядку'}],['VibrateAction',560,60,{}],['TimeOfDayConstraint',40,240,{a:8,b:22}]],l:[[0,1],[1,2]],cl:[[3,0]]},
+'Пришёл домой':{n:[['WifiConnectionTrigger',40,80,{}],['ToastAction',300,80,{tx:'С возвращением!'}],['PauseAction',560,80,{sec:1}],['LaunchActivityAction',300,220,{pk:'com.spotify.music'}]],l:[[0,1],[1,2],[2,3]]},
+'Ветвление по времени':{n:[['TimerTrigger',40,60,{}],['IfConditionAction',300,60,{}],['BatteryLevelConstraint',60,250,{g:0,lv:30}],['SetWifiAction',560,20,{}],['ElseAction',560,140,{}],['SetWifiAction',820,140,{st:1}],['EndIfAction',820,20,{}],['VibrateAction',1080,80,{}]],l:[[0,1],[1,3],[3,4],[4,5],[5,6],[6,7]],cl:[[2,1]]},
+'Цикл повторений':{n:[['ExternalPowerTrigger',40,80,{}],['LoopAction',300,80,{opt:0,cnt:3}],['ToastAction',560,40,{tx:'Итерация {loop_iteration}'}],['PauseAction',560,180,{sec:1}],['EndLoopAction',820,80,{}],['NotificationAction',1080,80,{sj:'Готово',tx:'Цикл завершён'}]],l:[[0,1],[1,2],[2,3],[3,4],[4,5]]}
 };
+// ===== Состояние =====
 let nodes=[],links=[],sel=null,nid=1,tab='p',drag=null,meta={name:'Новый макрос',desc:''};
-const cv=$('#cv'),svg=$('#lk'),wd=$('#wd'),P=$('#pn');
-function add(t,x,y,p){const n={id:nid++,t,x,y,p:{}};D[t].f.forEach(f=>n.p[f[0]]=f[3]);Object.assign(n.p,p||{});nodes.push(n);return n}
-function wp(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left+cv.scrollLeft,y:e.clientY-r.top+cv.scrollTop}}
-function rn(){wd.innerHTML='';nodes.forEach(n=>{const d=D[n.t],e=document.createElement('div');e.className='nd '+d.k+(sel==n.id?' sel':'');e.style.left=n.x+'px';e.style.top=n.y+'px';e.dataset.id=n.id;
-e.innerHTML=(d.k=='a'?`<i class="pt in" data-in="${n.id}"></i>`:'')+(d.k!='c'?`<i class="pt out" data-out="${n.id}"></i>`:'')+`<b>${d.n}</b><span>${esc(d.s(n.p))}</span>`;wd.appendChild(e)});
+let view={x:20,y:20,z:1},themePref=localStorage.getItem('drmmd.theme')||'auto';
+const cv=$('#cvWrap'),svg=$('#lk'),wd=$('#wd'),P=$('#pn'),world=$('#world');
+function applyView(){world.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.z})`;$('#zlbl').textContent=Math.round(view.z*100)+'%'}
+function wp(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left-view.x)/view.z,y:(e.clientY-r.top-view.y)/view.z}}
+function add(t,x,y,p,cls){const n={id:nid++,t,x,y,p:{},raw:null};const d=D[t];if(d)d.f.forEach(f=>n.p[f[0]]=f[3]);Object.assign(n.p,p||{});if(t=='UnknownBlock'){n.raw={m_classType:cls||''};n.p.cls=cls||''}nodes.push(n);return n}
+// ===== Рендер =====
+const KN=t=>D[t]&&!D[t].raw;
+function rn(){wd.innerHTML='';nodes.forEach(n=>{const d=D[n.t]||D.UnknownBlock;const e=document.createElement('div');e.className='nd '+d.k+(sel==n.id?' sel':'');e.style.left=n.x+'px';e.style.top=n.y+'px';e.dataset.id=n.id;
+const sub=d.raw&&n.raw?shortRaw(n.raw):(d.s?d.s(n.p):'');
+e.innerHTML=(d.k=='a'||d.k=='f'?`<i class="pt in" data-in="${n.id}"></i>`:'')+(d.k!='c'?`<i class="pt out" data-out="${n.id}"></i>`:'')+`<b>${ic(d.i)}${esc(d.n)}</b><span class="sub">${esc(sub)}</span>`+(d.cl&&!isLinkedC(n)?'<span class="badge">нужны условия</span>':'')+(!KN(n.t)&&n.raw?`<span class="badge">${esc(n.raw.m_classType||'?')}</span>`:'');wd.appendChild(e)});
 $('#hint').hidden=nodes.length>0;dl()}
-const pos=(id,o)=>{const n=nodes.find(x=>x.id==id);return[n.x+(o?W:0),n.y+22]};
+function shortRaw(r){try{const s=JSON.stringify(r);return s.length>60?s.slice(0,57)+'…':s}catch(_){return ''}}
+const isLinkedC=f=>links.some(l=>l.c!=null&&l.c==f.id);
+const pos=(id,o)=>{const n=nodes.find(x=>x.id==id);return[n.x+(o?W:0),n.y+24]};
 const cur=(a,b)=>{const dx=Math.max(50,Math.abs(b[0]-a[0])/2);return`M${a} C${a[0]+dx},${a[1]} ${b[0]-dx},${b[1]} ${b}`};
-function dl(){svg.innerHTML=links.map((l,i)=>`<path class="lk" data-i="${i}" d="${cur(pos(l.a,1),pos(l.b,0))}"><title>Нажмите, чтобы удалить связь</title></path>`).join('')+(drag&&drag.m=='l'?`<path class="tmp" d="${cur(pos(drag.from,1),[drag.x,drag.y])}"/>`:'')}
-svg.addEventListener('click',e=>{const p=e.target.closest('.lk');if(p){links.splice(+p.dataset.i,1);dl();rj()}});
+const curDown=(a,b)=>`M${a[0]},${a[1]} C${a[0]-40},${a[1]+50} ${b[0]-40},${b[1]+50} ${b[0]},${b[1]}`;
+function dl(){svg.innerHTML=links.map((l,i)=>{
+if(l.c!=null){const f=nodes.find(n=>n.id==l.a),c=nodes.find(n=>n.id==l.c);if(!f||!c)return'';return`<path class="lk br" data-i="${i}" d="${curDown([f.x+W/2,f.y+52],[c.x,c.y+24])}"><title>Условие блока — нажмите, чтобы удалить связь</title></path>`}
+return`<path class="lk" data-i="${i}" d="${cur(pos(l.a,1),pos(l.b,0))}"><title>Нажмите, чтобы удалить связь</title></path>`}).join('')+(drag&&drag.m=='l'?`<path class="tmp" d="${cur(pos(drag.from,1),[drag.x,drag.y])}"/>`:'')+(drag&&drag.m=='lc'?`<path class="tmp" d="${cur([drag.fx,drag.fy],[drag.x,drag.y])}"/>`:'')}
+svg.addEventListener('click',e=>{const p=e.target.closest('.lk');if(p){links.splice(+p.dataset.i,1);dl();rj();save()}});
 function pick(id){sel=id;document.querySelectorAll('.nd').forEach(e=>e.classList.toggle('sel',e.dataset.id==id));rp()}
 wd.addEventListener('pointerdown',e=>{const o=e.target.closest('[data-out]');
-if(o){drag={m:'l',from:+o.dataset.out,x:0,y:0};const w=wp(e);drag.x=w.x;drag.y=w.y;e.preventDefault();return}
-const el=e.target.closest('.nd');if(!el)return;const n=nodes.find(x=>x.id==el.dataset.id);pick(n.id);const w=wp(e);drag={m:'n',n,el,dx:w.x-n.x,dy:w.y-n.y}});
+if(o){drag={m:'l',from:+o.dataset.out};const w=wp(e);drag.x=w.x;drag.y=w.y;e.preventDefault();return}
+const el=e.target.closest('.nd');if(!el)return;const n=nodes.find(x=>x.id==el.dataset.id);pick(n.id);ensureVisible(n.id);
+if(e.altKey&&(D[n.t]||{}).cl){drag={m:'lc',from:n.id,fx:n.x+W/2,fy:n.y+52};const w=wp(e);drag.x=w.x;drag.y=w.y;e.preventDefault();return}
+const w=wp(e);drag={m:'n',n,el,dx:w.x-n.x,dy:w.y-n.y}});
 cv.addEventListener('pointerdown',e=>{if(!e.target.closest('.nd,.lk'))pick(null)});
-document.addEventListener('pointermove',e=>{if(!drag)return;const w=wp(e);
+document.addEventListener('pointermove',e=>{if(!drag)return;
+if(drag.m=='pan'){view.x=drag.vx+(e.clientX-drag.sx);view.y=drag.vy+(e.clientY-drag.sy);applyView();return}
+const w=wp(e);
 if(drag.m=='n'){drag.n.x=Math.max(0,Math.round((w.x-drag.dx)/10)*10);drag.n.y=Math.max(0,Math.round((w.y-drag.dy)/10)*10);drag.el.style.left=drag.n.x+'px';drag.el.style.top=drag.n.y+'px'}
 else{drag.x=w.x;drag.y=w.y}dl()});
 document.addEventListener('pointerup',e=>{if(!drag)return;
 if(drag.m=='l'){const t=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-in]');
-if(t){const b=+t.dataset.in;if(b!=drag.from&&!links.some(l=>l.a==drag.from&&l.b==b))links.push({a:drag.from,b})}}
+if(t){const b=+t.dataset.in;if(b!=drag.from&&!links.some(l=>l.a==drag.from&&l.b==b)){links.push({a:drag.from,b});rj();save()}}}
+if(drag.m=='lc'){const t=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-id]');
+if(t){const c=+t.dataset.id,cd=D[nodes.find(n=>n.id==c)?.t];if(cd&&cd.k=='c'&&c!=drag.from&&!links.some(l=>l.a==drag.from&&l.c==c)){links.push({a:drag.from,c});rn();toast('Условие привязано к блоку');save()}}}
 drag=null;dl();rj()});
-document.addEventListener('keydown',e=>{if((e.key=='Delete'||e.key=='Backspace')&&sel&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))rm(sel)});
-function rm(id){nodes=nodes.filter(n=>n.id!=id);links=links.filter(l=>l.a!=id&&l.b!=id);sel=null;rn();rp()}
+document.addEventListener('keydown',e=>{
+if((e.key=='Delete'||e.key=='Backspace')&&sel&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))rm(sel);
+if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='s'){e.preventDefault();exportMacro()}
+if(e.key.toLowerCase()=='d'&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)){setTheme(themePref=='dark'?'light':'dark')}});
+function rm(id){nodes=nodes.filter(n=>n.id!=id);links=links.filter(l=>l.a!=id&&l.b!=id&&l.c!=id);sel=null;rn();rp();save()}
 cv.addEventListener('dragover',e=>e.preventDefault());
-cv.addEventListener('drop',e=>{e.preventDefault();const t=e.dataTransfer.getData('t');if(!D[t])return;const w=wp(e);const n=add(t,Math.max(0,Math.round((w.x-W/2)/10)*10),Math.max(0,Math.round((w.y-20)/10)*10));rn();pick(n.id)});
-// палитра
-[['t','Триггеры','когда запускать'],['a','Действия','что делать'],['c','Условия','когда можно запускать']].forEach(([k,n,h])=>{
-$('#pal').insertAdjacentHTML('beforeend',`<h4>${n}</h4><div class="mu">${h}</div>`+Object.keys(D).filter(t=>D[t].k==k).map(t=>`<div class="pi ${k}" draggable="true" data-t="${t}">${D[t].n}</div>`).join(''))});
-$('#pal').addEventListener('dragstart',e=>{const p=e.target.closest('.pi');if(p)e.dataTransfer.setData('t',p.dataset.t)});
-$('#pal').addEventListener('click',e=>{const p=e.target.closest('.pi');if(!p)return;const c=nodes.length;const n=add(p.dataset.t,60+(c%6)*30+cv.scrollLeft,60+(c%6)*30+cv.scrollTop);rn();pick(n.id)});
-// панель
+cv.addEventListener('drop',e=>{e.preventDefault();const t=e.dataTransfer.getData('t');if(!D[t])return;const w=wp(e);const n=add(t,Math.max(0,Math.round((w.x-W/2)/10)*10),Math.max(0,Math.round((w.y-20)/10)*10));rn();pick(n.id);save()});
+// зум колесом / панорамирование
+cv.addEventListener('wheel',e=>{e.preventDefault();
+if(e.ctrlKey||e.metaKey){const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,f=e.deltaY<0?1.12:1/1.12,nz=Math.min(2.5,Math.max(.25,view.z*f));view.x=mx-(mx-view.x)*nz/view.z;view.y=my-(my-view.y)*nz/view.z;view.z=nz}
+else{view.x-=e.deltaX;view.y-=e.deltaY}applyView()},{passive:false});
+cv.addEventListener('pointerdown',e=>{if(e.button==1||(e.button==0&&e.shiftKey&&!e.target.closest('.nd,.lk,.zoombar,.hintcard'))){drag={m:'pan',sx:e.clientX,sy:e.clientY,vx:view.x,vy:view.y};e.preventDefault()}});
+function ensureVisible(id){const n=nodes.find(x=>x.id==id);if(!n)return;const r=cv.getBoundingClientRect();const sx=n.x*view.z+view.x,sy=n.y*view.z+view.y;if(sx<8||sy<8||sx+W*view.z>r.width-8||sy+70*view.z>r.height-8){view.x=Math.min(r.width-W*view.z-12,Math.max(12,r.width*0.35-n.x*view.z));view.y=Math.min(r.height-90,Math.max(12,r.height*0.4-n.y*view.z));applyView()}}
+$('#zin').onclick=()=>{view.z=Math.min(2.5,view.z*1.2);applyView()};
+$('#zout').onclick=()=>{view.z=Math.max(.25,view.z/1.2);applyView()};
+$('#zlbl').onclick=()=>{view.z=1;applyView()};
+function bounds(){if(!nodes.length)return null;let x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;nodes.forEach(n=>{x1=Math.min(x1,n.x);y1=Math.min(y1,n.y);x2=Math.max(x2,n.x+W);y2=Math.max(y2,n.y+70)});return{x1,y1,x2,y2}}
+$('#zfit').onclick=()=>{const b=bounds();if(!b){toast('Холст пуст');return}const r=cv.getBoundingClientRect(),pd=60;const z=Math.min(2.5,Math.max(.25,Math.min((r.width-pd)/(b.x2-b.x1),(r.height-pd)/(b.y2-b.y1))));view.z=z;view.x=(r.width-(b.x2-b.x1)*z)/2-b.x1*z;view.y=(r.height-(b.y2-b.y1)*z)/2-b.y1*z;applyView()};
+$('#zcenter').onclick=()=>{const b=bounds();if(!b)return;const r=cv.getBoundingClientRect();view.x=r.width/2-(b.x1+b.x2)/2*view.z;view.y=r.height/2-(b.y1+b.y2)/2*view.z;applyView()};
+// ===== Палитра =====
+function renderPal(q=''){const list=$('#palList');list.innerHTML=CATS.map(([k,n,h])=>{const items=Object.keys(D).filter(t=>D[t].k==k&&(!q||(D[t].n+' '+h+' '+t).toLowerCase().includes(q)));if(!items.length)return'';return`<h4 class="${k}"><i></i>${n}</h4><div class="mu">${h}</div>`+items.map(t=>`<div class="pi ${k}" draggable="true" data-t="${t}" title="${esc(D[t].h)}"><span class="ic">${ic(D[t].i)}</span><span class="tx"><b>${D[t].n}</b><small>${esc(D[t].s?D[t].s(Object.fromEntries(D[t].f.map(f=>[f[0],f[3]]))):'')}</small></span></div>`).join('')}).join('')||'<p class="mu" style="padding:10px">Ничего не найдено</p>'}
+renderPal();
+$('#pq').addEventListener('input',e=>renderPal(e.target.value.trim().toLowerCase()));
+$('#palList').addEventListener('dragstart',e=>{const p=e.target.closest('.pi');if(p)e.dataTransfer.setData('t',p.dataset.t)});
+$('#palList').addEventListener('click',e=>{const p=e.target.closest('.pi');if(!p)return;const r=cv.getBoundingClientRect();const n=add(p.dataset.t,Math.round((r.width/2-view.x)/view.z-W/2),Math.round((r.height/2-view.y)/view.z-30));rn();pick(n.id);save()});
+// ===== Панель свойств =====
 function rp(){P.oninput=null;
-if(tab=='j'){P.innerHTML=`<button class="b" id="cp">Копировать JSON</button><pre>${esc(JSON.stringify(build(),null,2))}</pre>`;$('#cp').onclick=()=>{const t=JSON.stringify(build());const done=()=>{$('#cp').textContent='Скопировано'};try{navigator.clipboard.writeText(t).then(done,()=>{})}catch(_){}};return}
+if(tab=='v'){const d=describe();P.innerHTML=d.html;return}
+if(tab=='d'){const draw=()=>{P.innerHTML=diffView();const sn=$('#snapNow');if(sn)sn.onclick=()=>{setBaseline('Ручная фиксация · '+new Date().toLocaleTimeString());draw();toast('Текущее состояние зафиксировано как база')};const sr=$('#snapReset');if(sr)sr.onclick=()=>{baseline=null;draw()};const rb=$('#snapRebase');if(rb)rb.onclick=()=>{setBaseline(baseline.label+' (обновлено)');draw();toast('База обновлена до текущего состояния')}};draw();return}
+if(tab=='j'){const j=JSON.stringify(build(),null,2);P.innerHTML=`<div style="display:flex;gap:6px"><button class="b" id="cp">Копировать</button><button class="b" id="dl2">Скачать .macro</button></div><pre>${esc(j)}</pre>`;$('#cp').onclick=()=>copyText(j,'JSON скопирован');$('#dl2').onclick=exportMacro;return}
 const n=nodes.find(x=>x.id==sel);
-if(!n){P.innerHTML=`<label>Описание макроса<textarea id="ds">${esc(meta.desc)}</textarea></label><p class="mu">Выберите блок на холсте, чтобы изменить его настройки. Порядок действий задаёт цепочка связей от триггера. Условия действуют на весь макрос.</p><p class="mu">Блоков: ${nodes.length}, связей: ${links.length}</p>`;$('#ds').oninput=e=>{meta.desc=e.target.value};return}
-const d=D[n.t];
-P.innerHTML=`<h3 class="${d.k}">${d.n}</h3><p class="mu">${d.h}</p>`+d.f.map(f=>`<label>${f[1]}`+(f[2]=='x'?`<select data-k="${f[0]}">${f[4].map(o=>`<option value="${o[0]}"${o[0]==n.p[f[0]]?' selected':''}>${o[1]}</option>`).join('')}</select>`:`<input data-k="${f[0]}" type="${f[2]=='n'?'number':'text'}" value="${esc(n.p[f[0]])}">`)+'</label>').join('')+`<button class="b del" id="rm">Удалить блок</button>`;
-P.oninput=e=>{const k=e.target.dataset.k;if(!k)return;n.p[k]=e.target.value;const s=wd.querySelector(`[data-id="${n.id}"] span`);if(s)s.textContent=d.s(n.p)};
-$('#rm').onclick=()=>rm(n.id)}
-const rj=()=>{if(tab=='j')rp()};
+if(!n){P.innerHTML=`<label>Описание макроса<textarea id="ds">${esc(meta.desc)}</textarea></label><p class="mu">Выберите блок на холсте, чтобы изменить его настройки. Порядок действий задаёт цепочка связей от триггера. Свободные ограничения действуют на весь макрос.</p><p class="mu">Блоков: ${nodes.length} · связей: ${links.filter(l=>l.c==null).length} · условий: ${links.filter(l=>l.c!=null).length}</p>`;$('#ds').oninput=e=>{meta.desc=e.target.value;save()};return}
+const d=D[n.t]||D.UnknownBlock;
+if(d.raw){P.innerHTML=`<h3 class="${d.k}">${ic(d.i)}${d.n}</h3><p class="mu">${d.h}</p><label>classType<input id="ukCls" value="${esc(n.raw?.m_classType||'')}"></label><label>Сырой JSON<textarea id="rawEd" spellcheck="false">${esc(JSON.stringify(n.raw,null,2))}</textarea></label><div style="display:flex;gap:6px;margin-top:10px"><button class="b pri" id="rawApply">Применить JSON</button><button class="b" id="rawCp">Копировать</button></div><button class="b del" id="rmB">Удалить блок</button>`;
+$('#rawApply').onclick=()=>{try{const o=JSON.parse($('#rawEd').value);if(typeof o!=='object'||o===null)throw 0;n.raw=o;const c=$('#ukCls').value.trim();if(c)n.raw.m_classType=c;if(!n.raw.m_classType)n.raw.m_classType='Unknown';n.p.cls=n.raw.m_classType;rn();rp();save();toast('Сырой JSON обновлён')}catch(_){toast('Некорректный JSON — исправьте синтаксис')}};
+$('#ukCls').oninput=e=>{if(n.raw){n.raw.m_classType=e.target.value;n.p.cls=e.target.value;const s=wd.querySelector(`[data-id="${n.id}"] .sub`);if(s)s.textContent=e.target.value}};
+$('#rawCp').onclick=()=>copyText(JSON.stringify(n.raw,null,2),'JSON блока скопирован');
+$('#rmB').onclick=()=>rm(n.id);return}
+P.innerHTML=`<h3 class="${d.k}">${ic(d.i)}${d.n}</h3><p class="mu">${d.h}</p>`+d.f.map(f=>`<label>${f[1]}`+(f[2]=='x'?`<select data-k="${f[0]}">${f[4].map(o=>`<option value="${o[0]}"${String(o[0])==String(n.p[f[0]])?' selected':''}>${o[1]}</option>`).join('')}</select>`:`<input data-k="${f[0]}" type="${f[2]=='n'?'number':'text'}" value="${esc(n.p[f[0]])}">`)+'</label>').join('')
++(d.cl?`<h4 style="margin:16px 0 0;font-size:12px;color:var(--mu)">Условия этого блока (${linkedC(n).length})</h4>`+(linkedC(n).length?linkedC(n).map(c=>`<div class="pi c" style="cursor:default;margin-top:6px"><span class="ic">${ic((D[c.t]||{}).i||'gear')}</span><span class="tx"><b>${D[c.t]?D[c.t].n:'?'}</b><small>${esc(D[c.t]&&D[c.t].s?D[c.t].s(c.p):'')}</small></span><button class="b" data-uc="${c.id}" style="margin-left:auto;padding:3px 8px" title="Отвязать">×</button></div>`).join(''):'<p class="mu">Нет. Зажмите Alt и потяните от этого блока вниз к ограничению (жёлтому блоку).</p>'):'')+`<button class="b del" id="rmB">Удалить блок</button>`;
+P.oninput=e=>{const k=e.target.dataset.k;if(!k)return;n.p[k]=e.target.value;const s=wd.querySelector(`[data-id="${n.id}"] .sub`);if(s&&d.s)s.textContent=d.s(n.p);save()};
+P.querySelectorAll('[data-uc]').forEach(b=>b.onclick=()=>{links=links.filter(l=>!(l.a==n.id&&l.c==+b.dataset.uc));rn();rp();save()});
+$('#rmB').onclick=()=>rm(n.id)}
+function linkedC(n){return links.filter(l=>l.c!=null&&l.a==n.id).map(l=>nodes.find(x=>x.id==l.c)).filter(Boolean)}
+const rj=()=>{if(tab=='j'||tab=='v'||tab=='d')rp()};
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.setAttribute('aria-pressed',x==b));rp()});
-// экспорт в формат MacroDroid
+// ===== Предпросмотр (человеческое описание макроса) =====
+function catOf(n){return (D[n.t]||D.UnknownBlock).k}
+function it(k,name,s){return`<div class="vitem ${k}"><span class="ic">${ic((D[name]||{}).i||'gear')}</span><span><b>${esc(name)}</b><small>${s||''}</small></span></div>`}
+function describe(){const errs=validate();
+const trs=nodes.filter(n=>catOf(n)=='t'),cos=nodes.filter(n=>catOf(n)=='c'&&!isLinkedC(n));
+const seen=new Set(),walk=id=>links.filter(l=>l.a==id&&l.c==null).forEach(l=>{if(!seen.has(l.b)){seen.add(l.b);walk(l.b)}});
+trs.forEach(n=>walk(n.id));
+const rest=nodes.filter(n=>['a','f'].includes(catOf(n))&&!seen.has(n.id)).sort((a,b)=>a.x-b.x||a.y-b.y);
+const flow=[...trs.flatMap(n=>chain(n.id)),...rest];
+const item=n=>{const d=D[n.t]||D.UnknownBlock;const cs=linkedC(n).map(c=>{const cd=D[c.t]||D.UnknownBlock;return cd.n+': '+cd.s(c.p)});
+return it(d.k,d.n,esc(d.raw?(n.raw?.m_classType||''):d.s(n.p))+(cs.length?`<small>Условия блока: ${esc(cs.join(' · '))}</small>`:''))};
+function chain(id,out){out=out||new Set();if(out.has(id))return[];out.add(id);const n=nodes.find(x=>x.id==id);return(n?[n]:[]).concat(...links.filter(l=>l.a==id&&l.c==null).map(l=>chain(l.b,out)))}
+const body=(trs.length?'<div class="vsec">Запуск</div>'+trs.map(item).join(''):'')+
+'<div class="vsec">Порядок выполнения</div>'+(flow.filter(n=>catOf(n)!='t').length?flow.filter(n=>catOf(n)!='t').map(item).join(''):'<p class="mu">Действий нет</p>')+
+(cos.length?'<div class="vsec">Ограничения всего макроса</div>'+cos.map(item).join(''):'');
+return{name:meta.name,html:`<div class="ph"><b>${esc(meta.name||'Без названия')}</b></div>${meta.desc?`<p class="mu" style="margin:-4px 0 8px">${esc(meta.desc)}</p>`:''}<div class="vbadges">${errs.length?errs.map(e=>`<span class="vbadge err" title="${esc(e)}">⚠ ${esc(e.length>60?e.slice(0,57)+'…':e)}</span>`).join(''):'<span class="vbadge ok">✓ Структура корректна</span>'}<span class="vbadge">триггеров: ${trs.length}</span><span class="vbadge">действий: ${flow.filter(n=>!['t','c'].includes(catOf(n))).length}</span><span class="vbadge">ограничений: ${cos.length}</span></div>${body}`}}
+function validate(){const e=[];const tr=nodes.filter(n=>catOf(n)=='t');if(!tr.length)e.push('Нет триггера — макрос не будет запускаться');
+nodes.filter(n=>n.t=='IfConditionAction').forEach(n=>{if(!linkedC(n).length)e.push('Блок «Если» без условия — ветка выполнится всегда')});
+nodes.filter(n=>n.t=='ElseIfConditionAction').forEach(n=>{if(!linkedC(n).length)e.push('«Иначе если» без условия — условие всегда истинно')});
+nodes.filter(n=>n.t=='LoopAction').forEach(n=>{const hasEnd=links.some(l=>l.a==n.id&&l.c==null&&chainHas(l.b,'EndLoopAction'));if(!hasEnd)e.push('Цикл Loop без EndLoop в цепочке');if(['1','2'].includes(String(n.p.opt))&&!linkedC(n).length)e.push('Цикл while/do-while без ограничения-условия')});
+const cnt=t=>nodes.filter(n=>n.t==t).length;
+if(cnt('EndIfAction')>cnt('IfConditionAction'))e.push('Лишние EndIf: закрытий больше, чем открытий If');
+if(cnt('EndLoopAction')>cnt('LoopAction'))e.push('Лишние EndLoop: закрытий больше, чем Loop');
+if(nodes.some(n=>n.t=='ElseAction'&&!cnt('IfConditionAction')))e.push('Else без If');
+if(!nodes.filter(n=>['a','f'].includes(catOf(n))).length)e.push('Нет действий — макросу нечего выполнять');
+const un=nodes.filter(n=>!KN(n.t));if(un.length)e.push(un.length+' блок(ов) «Прочее» — экспортируются как есть');
+return e}
+function chainHas(id,t,depth){depth=depth||0;if(depth>300)return false;const n=nodes.find(x=>x.id==id);if(n&&n.t==t)return true;return links.filter(l=>l.a==id&&l.c==null).some(l=>chainHas(l.b,t,depth+1))}
+// ===== Разница с точкой сравнения (импортом) =====
+let baseline=null; // {label, items:[{key,name,detail}], name, desc}
+function snapItems(){const out=[];
+nodes.filter(n=>catOf(n)=='t').forEach(n=>out.push(blk('T',n)));
+nodes.filter(n=>['a','f'].includes(catOf(n))).forEach(n=>out.push(blk('A',n)));
+nodes.filter(n=>catOf(n)=='c').forEach(n=>out.push(blk('C',n)));
+return out}
+function blk(p,n){const d=D[n.t]||D.UnknownBlock;const key=p+JSON.stringify(d.raw?{u:stripIds(n.raw)}:{t:n.t,p:n.p,cs:linkedC(n).map(c=>({t:c.t,p:c.p,u:stripIds(c.raw)}))});
+return{key,name:d.n,detail:d.raw?String(n.raw?.m_classType||''):d.s(n.p),pos:execPos(n)}}
+function stripIds(o){if(!o||typeof o!=='object')return o;const{m_SIGUID,m_GUID,...r}=o;for(const k in r)if(Array.isArray(r[k]))r[k]=r[k].map(stripIds);return r}
+function execPos(n){const order=[],seen=new Set(),walk=id=>links.filter(l=>l.a==id&&l.c==null).forEach(l=>{if(!seen.has(l.b)){seen.add(l.b);order.push(l.b);walk(l.b)}});
+nodes.filter(x=>catOf(x)=='t').forEach(x=>walk(x.id));return order.indexOf(n.id)}
+function setBaseline(label){baseline={label,items:snapItems(),name:meta.name,desc:meta.desc}}
+function diffView(){if(!baseline)return`<p class="mu">Точка сравнения не задана. После импорта макроса она создаётся автоматически; затем здесь видно, что вы изменили относительно исходного файла.</p><button class="b pri" id="snapNow" style="margin-top:10px">Зафиксировать текущее состояние как базу</button>`;
+const cur=snapItems();const b=baseline.items;
+// сопоставление блоков по типу (с сохранением порядка) — чтобы правка параметров показывалась как «изменено», а не «+1/−1»
+const byType=(arr)=>{const m=new Map();arr.forEach((x,i)=>{const a=m.get(x.name)||[];a.push(i);m.set(x.name,a)});return m}
+const used=new Set();const match=new Map(); // индекс cur -> индекс base
+const bmT=byType(b);
+cur.forEach((x,i)=>{const lst=bmT.get(x.name)||[];const j=lst.find(k=>!used.has(k));if(j!==undefined){used.add(j);match.set(i,j)}});
+const rows=[];
+cur.forEach((x,i)=>{if(!match.has(i))rows.push({t:'+',cls:'diffadd',tx:`${esc(x.name)} <small class="mu">${esc(x.detail)}</small>${x.pos>=0?` <small class="mu">· шаг ${x.pos+1}</small>`:''}`});else{const y=b[match.get(i)];if(y.detail!==x.detail)rows.push({t:'≠',cls:'diffchg',tx:`<span class="dold">${esc(y.name)}: ${esc(y.detail)}</span> <span class="arrowd">→</span> <span class="dnew">${esc(x.name)}: ${esc(x.detail)}</span>`})}});
+b.forEach((y,j)=>{if(!used.has(j))rows.push({t:'−',cls:'diffdel',tx:`${esc(y.name)} <small class="mu">${esc(y.detail)}</small>`})});
+const nameChg=baseline.name!==meta.name,descChg=baseline.desc!==meta.desc;
+let h=`<div class="dbefore">Сравнение с: <b>${esc(baseline.label)}</b> (${b.length} блоков) · сейчас: ${cur.length} · <button id="snapReset">Сбросить точку</button> <button id="snapRebase" style="margin-left:6px">Обновить базу до текущего</button></div>`;
+h+=`<div class="vbadges"><span class="vbadge diffadd">+ новых: ${rows.filter(r=>r.t=='+').length}</span><span class="vbadge diffdel">− удалено: ${rows.filter(r=>r.t=='−').length}</span><span class="vbadge diffchg">≠ изменено: ${rows.filter(r=>r.t=='≠').length}</span><span class="vbadge ok">без изменений: ${cur.length-rows.filter(r=>r.t!='−').length}</span></div>`;
+if(nameChg)h+=`<div class="drow"><span class="dtag diffchg">имя</span><span class="dtxt"><span class="dold">${esc(baseline.name)}</span> <span class="arrowd">→</span> <span class="dnew">${esc(meta.name)}</span></span></div>`;
+if(descChg)h+=`<div class="drow"><span class="dtag diffchg">опис.</span><span class="dtxt"><span class="dold">${esc(baseline.desc||'—')}</span> <span class="arrowd">→</span> <span class="dnew">${esc(meta.desc||'—')}</span></span></div>`;
+if(!rows.length&&!nameChg&&!descChg)h+='<p class="mu" style="margin-top:10px">Экспорт идентичен точке сравнения ✓</p>';
+h+=rows.map(r=>`<div class="drow"><span class="dtag ${r.cls}">${r.t}</span><span class="dtxt">${r.tx}</span></div>`).join('');
+return h}
+// ===== Экспорт в формат MacroDroid =====
 function build(){
-const tr=nodes.filter(n=>D[n.t].k=='t'),ac=nodes.filter(n=>D[n.t].k=='a'),co=nodes.filter(n=>D[n.t].k=='c');
-const order=[],seen=new Set(),walk=id=>links.filter(l=>l.a==id).forEach(l=>{if(!seen.has(l.b)){seen.add(l.b);order.push(l.b);walk(l.b)}});
-tr.forEach(n=>walk(n.id));ac.filter(n=>!seen.has(n.id)).sort((a,b)=>a.x-b.x||a.y-b.y).forEach(n=>order.push(n.id));
-const mk=(n,g)=>({m_classType:n.t,m_SIGUID:g||0,...D[n.t].o(n.p)});
-const acts=order.map(id=>nodes.find(n=>n.id==id)).filter(n=>D[n.t].k=='a').map(n=>mk(n));
-return{macroExportVersion:1,macro:{m_name:meta.name,m_description:meta.desc||meta.name,m_enabled:true,m_completed:true,m_GUID:0,aiGenerated:1,
-m_triggerList:tr.length?tr.map((n,i)=>mk(n,112233445566771+i)):[{m_classType:'EmptyTrigger',m_SIGUID:0}],
-m_actionList:acts,m_constraintList:co.map(n=>mk(n))},globalVariables:[],userIcons:null,aiFeedback:'Собрано в визуальном редакторе. Все триггеры запускают одну общую цепочку действий.'}}
-// шаблоны и шапка
-function load(name){const t=T[name];nodes=[];links=[];nid=1;sel=null;const ids=t.n.map(([k,x,y,p])=>add(k,x,y,p).id);t.l.forEach(([a,b])=>links.push({a:ids[a],b:ids[b]}));meta.name=name;$('#nm').value=name;rn();rp()}
+const cat=n=>(D[n.t]||D.UnknownBlock).k;
+const tr=nodes.filter(n=>cat(n)=='t'),co=nodes.filter(n=>cat(n)=='c');
+const order=[],seen=new Set(),walk=id=>links.filter(l=>l.a==id&&l.c==null).forEach(l=>{if(!seen.has(l.b)){seen.add(l.b);order.push(l.b);walk(l.b)}});
+tr.forEach(n=>walk(n.id));
+const rest=nodes.filter(n=>(cat(n)=='a'||cat(n)=='f')&&!seen.has(n.id)).sort((a,b)=>a.x-b.x||a.y-b.y);rest.forEach(n=>order.push(n.id));
+const sg=new Map();tr.forEach((n,i)=>sg.set(n.id,112233445566771+i));
+const mk=(n,g)=>{const d=D[n.t]||D.UnknownBlock;if(d.raw)return{...n.raw};const o={m_classType:n.t,m_SIGUID:g||0,...d.o(n.p)};if(d.cl){const cs=linkedC(n).map(c=>{const cd=D[c.t];return cd&&cd.raw?{...c.raw}:{m_classType:c.t,m_SIGUID:0,...(cd?cd.o(c.p):{})}});if(cs.length)o.m_constraintList=cs}return o};
+const acts=order.map(id=>nodes.find(n=>n.id==id)).filter(n=>{const d=D[n.t]||D.UnknownBlock;return ['a','f'].includes(d.k)&&!(d.raw&&isLinkedC(n))}).map(n=>{if(!KN(n.t)&&n.raw){const o={...n.raw};if(Array.isArray(o.m_constraintList)){o.m_constraintList=linkedC(n).map(c=>c.raw?{...c.raw}:{m_classType:c.t,m_SIGUID:0,...(D[c.t]?D[c.t].o(c.p):{})})}return o}return mk(n,0)});
+return{macroExportVersion:1,macro:{m_name:meta.name||'Без названия',m_description:meta.desc||meta.name,m_enabled:true,m_completed:true,m_GUID:0,aiGenerated:1,
+m_triggerList:tr.length?tr.map(n=>mk(n,sg.get(n.id))):[{m_classType:'EmptyTrigger',m_SIGUID:0}],
+m_actionList:acts,m_constraintList:co.map(n=>mk(n,0))},globalVariables:[],userIcons:null,aiFeedback:'Собрано в визуальном редакторе drmMD.'}}
+// ===== Проект (полное состояние редактора) =====
+function proj(){return{app:'drmMD-editor',version:1,name:meta.name,desc:meta.desc,nodes:nodes.map(n=>({id:n.id,t:n.t,x:n.x,y:n.y,p:n.p,raw:n.raw})),links:links.map(l=>({...l})),nid}}
+function loadProj(o){if(!o||!Array.isArray(o.nodes))throw new Error('структура проекта не распознана');nodes=o.nodes.map(n=>({id:n.id,t:D[n.t]?n.t:'UnknownBlock',x:n.x||0,y:n.y||0,p:n.p||{},raw:n.raw||(D[n.t]&&D[n.t].raw?{m_classType:(n.p&&n.p.cls)||'Unknown'}:null)}));links=(o.links||[]).map(l=>({...l}));nid=o.nid||Math.max(0,...nodes.map(n=>n.id))+1;meta.name=o.name||'Импортированный макрос';meta.desc=o.desc||'';$('#nm').value=meta.name;sel=null;rn();rp();fitCenter()}
+function fitCenter(){requestAnimationFrame(()=>{$('#zfit').click()})}
+// ===== Импорт MacroDroid JSON =====
+function norm(v,opts){for(const o of opts)if(o[0]==v)return o[0];return opts[0][0]}
+function daysToLabel(arr){if(!Array.isArray(arr))return'all';const wd=arr.slice(1,6),we=[arr[0],arr[6]];return wd.every(Boolean)&&!we.some(Boolean)?'wd':we.every(Boolean)&&!wd.some(Boolean)?'we':'all'}
+const TRIG={'TimerTrigger':p=>({h:p.m_hour??7,m:p.m_minute??0,d:daysToLabel(p.m_daysOfWeek)}),'WifiConnectionTrigger':p=>({w:norm(p.m_wifiState,WS),ssid:p.m_SSID||(p.m_SSIDList||[])[0]||'Home'}),'BatteryLevelTrigger':p=>({dn:p.m_decreasesTo?1:0,lv:p.m_batteryLevel??20}),'ExternalPowerTrigger':p=>({c:p.m_powerConnected?1:0}),'NotificationTrigger':p=>({pk:(p.m_packageNameList||[])[0]||p.m_packageName||'com.whatsapp',tx:p.messageContent||''}),'ScreenOnOffTrigger':p=>({on:p.m_screenOn?1:0})};
+const ACT={'NotificationAction':p=>({sj:p.m_notificationSubject||'Готово',tx:p.m_notificationText||''}),'ToastAction':p=>({tx:p.m_messageText||'Привет!',du:norm(p.m_duration,[[2],[0]])}),'SetWifiAction':p=>({st:norm(p.m_state,ON)}),'SetBluetoothAction':p=>({st:norm(p.m_state,ON)}),'PauseAction':p=>({sec:p.m_delayInSeconds??2}),'VibrateAction':p=>({v:norm(p.m_vibratePattern,[[0],[1],[2],[3]])}),'LaunchActivityAction':p=>({pk:p.m_packageToLaunch||p.launchByPackageName||'com.android.chrome'}),'SetBrightnessAction':p=>({b:p.m_brightnessPercent??50}),'IfConditionAction':p=>({or:p.m_isOrCondition?1:0}),'ElseIfConditionAction':p=>({or:p.m_isOrCondition?1:0}),'ElseAction':()=>({}),'EndIfAction':()=>({}),'LoopAction':p=>({opt:norm(p.m_option,LOPT),cnt:p.m_fixedOptionCount??5,dur:p.timedDurationValue??30,u:norm(p.timedTimeUnit,UNIT)}),'BreakFromLoopAction':()=>({}),'ContinueLoopAction':()=>({}),'EndLoopAction':()=>({})};
+const CON={'BatteryLevelConstraint':p=>({g:p.m_greaterThan?1:0,lv:p.m_batteryLevel??20}),'TimeOfDayConstraint':p=>({a:p.m_startHour??22,am:p.m_startMinute??0,b:p.m_endHour??7,bm:p.m_endMinute??0}),'DayOfWeekConstraint':p=>({d:daysToLabel(p.m_daysOfWeek)}),'WifiConstraint':p=>({w:p.m_connected?0:1}),'MacroDroidVariableConstraint':p=>({vn:p.m_variable?.m_name||'my_var',vl:p.m_stringValue??p.m_intValue??'1',op:p.m_compareEqual!==false?(p.m_stringGreaterThan||p.m_intGreaterThan?2:(p.m_stringLessThan||p.m_intLessThan?3:0)):1})};
+function importMD(o,warn){
+const m=o.macro||o;if(!m||typeof m!=='object'||!m.m_actionList&&!m.m_triggerList)throw new Error('в файле не найден макрос (m_actionList / m_triggerList)');
+const g=(obj,map)=>{const cn=obj.m_classType;if(map[cn]){if(obj.m_constraintList&&!Array.isArray(obj.m_constraintList)){warn.push(`Блок «${cn}» — нестандартное поле m_constraintList, блок импортирован как «Прочее»`);const u=add('UnknownBlock',0,0,{},cn);u.raw={...obj};return u}
+const n=add(cn,0,0,map[cn](obj));if(Array.isArray(obj.m_constraintList)&&obj.m_constraintList.length){if((D[cn]||{}).cl){obj.m_constraintList.forEach(c=>{const cn2=c.m_classType;if(CON[cn2]){const u=add(cn2,0,0,CON[cn2](c));links.push({a:n.id,c:u.id})}else{warn.push(`Условие «${cn2}» внутри блока — импортировано как «Прочее» (сырой JSON)`);const u=add('UnknownBlock',0,0,{},cn2);u.raw={...c};links.push({a:n.id,c:u.id})}})}else{n.raw={...obj};warn.push(`Вложенные условия блока «${cn}» не поддерживаются редактором — блок импортирован как «Прочее» с полным сохранением JSON`)}}
+return n}
+warn.push(`Класс «${cn}» не поддерживается редактором — импортирован как «Прочее» (сырой JSON сохранён, экспорт без изменений)`);const u=add('UnknownBlock',0,0,{},cn);u.raw={...obj};return u};
+nodes=[];links=[];nid=1;sel=null;
+const tr=(m.m_triggerList||[]).filter(t=>t.m_classType!='EmptyTrigger').map(t=>g(t,TRIG));
+const co=(m.m_constraintList||[]).map(t=>g(t,CON));
+const actSeq=(m.m_actionList||[]).map(a=>g(a,{...ACT}));
+let x=40;const lane=k=>k=='c'?340:k=='f'?250:80;
+tr.forEach(n=>{n.x=x;n.y=lane(cat0(n));x+=270});
+actSeq.forEach((n,i)=>{n.x=x;n.y=lane(cat0(n));x+=270;if(i>0)links.push({a:actSeq[i-1].id,b:n.id})});
+if(tr.length&&actSeq.length)links.push({a:tr[tr.length-1].id,b:actSeq[0].id});
+co.forEach(n=>{n.x=40;n.y=lane(cat0(n))});
+function cat0(n){return (D[n.t]||D.UnknownBlock).k}
+meta.name=m.m_name||'Импортированный макрос';meta.desc=m.m_description||'';$('#nm').value=meta.name;
+if(!tr.length)warn.push('Макрос без триггера (или все триггеры отфильтрованы) — добавьте триггер вручную');
+return nodes.length}
+function ingest(text,src){let o;try{o=JSON.parse(text)}catch(_){toast('Не удалось разобрать JSON: '+src);return}
+if(o&&o.app=='drmMD-editor'){try{loadProj(o);save();toast('Проект редактора загружен')}catch(e){toast('Импорт проекта не удался: '+(e.message||''))}return}
+const warn=[];let cnt=0;try{cnt=importMD(o,warn)}catch(e){toast('Импорт не удался: '+(e.message||'структура не распознана'));return}
+rn();rp();fitCenter();save();setBaseline('Импорт: '+src);
+if(warn.length){openModal('Импорт завершён: '+warn.length+' замечаний',`<p class="mu">Импортировано блоков: ${cnt}. Поддерживаемые классы распознаются и редактируются; остальные показаны как «Прочее» — их исходный JSON попадёт в экспорт без изменений.</p><ul class="warn-list">${warn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>`)}
+toast('Импортировано блоков: '+cnt+(warn.length?` · замечаний: ${warn.length}`:''))}
+// ===== Файловые операции =====
+function dl(name,text){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);toast('Файл сохранён: '+name)}
+const safe=s=>(s||'macro').replace(/[^\w\-А-Яа-яЁё ]+/g,'').trim().replace(/\s+/g,'_')||'macro';
+function exportMacro(){dl(safe(meta.name)+'.macro',JSON.stringify(build(),null,2));save()}
+function exportProj(){dl(safe(meta.name)+'.drmmd.json',JSON.stringify(proj(),null,2));save()}
+function copyText(t,msg){const done=()=>toast(msg||'Скопировано');if(navigator.clipboard?.writeText)navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t,done));else fallbackCopy(t,done)}
+function fallbackCopy(t,cb){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy')}catch(_){}ta.remove();cb&&cb()}
+$('#fIn').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>ingest(r.result,f.name);r.readAsText(f);e.target.value=''};
+async function importClipboard(){try{const t=await navigator.clipboard.readText();if(!t.trim())return toast('Буфер обмена пуст');ingest(t,'буфер обмена')}catch(_){openModal('Импорт из буфера обмена','<p class="mu">Браузер не дал доступ к буферу обмена (для file:// это нормально). Вставьте JSON сюда:</p><textarea id="clipTa" placeholder="{ &quot;macroExportVersion&quot;: 1, … }"></textarea>',()=>{const v=$('#clipTa').value;if(v.trim())ingest(v,'вставка')})}}
+// ===== Меню =====
+function closePops(){document.querySelectorAll('.pop').forEach(p=>p.classList.remove('open'))}
+$('#btnFile').onclick=e=>{e.stopPropagation();const p=$('#popFile');closePops();p.classList.toggle('open')};
+$('#btnTheme').onclick=e=>{e.stopPropagation();const p=$('#popTheme');closePops();p.classList.toggle('open')};
+document.addEventListener('click',closePops);
+$('#popFile').onclick=e=>{const b=e.target.closest('[data-a]');if(!b)return;closePops();({new:()=>{if(confirm('Очистить текущий макрос?')){$('#clr').click()}},open:()=>$('#fIn').click(),paste:importClipboard,md:exportMacro,proj:exportProj,copy:()=>copyText(JSON.stringify(build(),null,2),'JSON MacroDroid скопирован')})[b.dataset.a]()};
+$('#popTheme').onclick=e=>{const b=e.target.closest('[data-th]');if(b){setTheme(b.dataset.th);closePops()}};
+function setTheme(t){themePref=t;localStorage.setItem('drmmd.theme',t);document.documentElement.removeAttribute('data-theme');if(t!='auto')document.documentElement.setAttribute('data-theme',t);$('#thIco').innerHTML=t=='dark'?'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>':IC.sun}
+// ===== Модальное окно =====
+let mOkCb=null;
+function openModal(title,body,onOk){$('#mTitle').textContent=title;$('#mBody').innerHTML=body;mOkCb=onOk||null;const ok=$('#mOk');ok.hidden=!onOk;$('#modal').classList.add('open')}
+$('#mClose').onclick=()=>$('#modal').classList.remove('open');
+$('#modal').onclick=e=>{if(e.target.id=='modal')$('#modal').classList.remove('open')};
+$('#mOk').onclick=()=>{if(mOkCb)mOkCb();$('#modal').classList.remove('open')};
+document.addEventListener('keydown',e=>{if(e.key=='Escape'){$('#modal').classList.remove('open');closePops()}});
+// ===== Автосохранение =====
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem('drmmd.autosave',JSON.stringify(proj()))}catch(_){}},600)}
+// ===== Шапка / шаблоны =====
+function load(name){const t=T[name];nodes=[];links=[];nid=1;sel=null;const ids=t.n.map(([k,x,y,p])=>add(k,x,y,p).id);t.l.forEach(([a,b])=>links.push({a:ids[a],b:ids[b]}));(t.cl||[]).forEach(([ci,ai])=>links.push({a:ids[ai],c:ids[ci]}));meta.name=name;$('#nm').value=name;rn();rp();save();requestAnimationFrame(()=>{$('#zfit').click()})}
 Object.keys(T).forEach(k=>$('#tp').insertAdjacentHTML('beforeend',`<option>${k}</option>`));
 $('#tp').onchange=e=>{if(e.target.value)load(e.target.value);e.target.value=''};
-$('#clr').onclick=()=>{nodes=[];links=[];sel=null;nid=1;rn();rp()};
-$('#nm').oninput=e=>{meta.name=e.target.value;rj()};
-load('Wi‑Fi по расписанию');
+$('#clr').onclick=()=>{nodes=[];links=[];sel=null;nid=1;rn();rp();save()};
+$('#nm').oninput=e=>{meta.name=e.target.value;rj();save()};
+// старт: автосейв → первый шаблон
+(function(){setTheme(themePref);
+let ok=false;try{const s=localStorage.getItem('drmmd.autosave');if(s){loadProj(JSON.parse(s));ok=true;setTimeout(()=>toast('Загружена автосохранённая сессия'),400)}}catch(_){}
+if(!ok)load('Wi‑Fi по расписанию');
+applyView()})();
 </script></body></html>
